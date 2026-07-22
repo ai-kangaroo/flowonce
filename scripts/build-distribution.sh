@@ -34,6 +34,9 @@ if [ -n "${RECORD_REPLAY_NOTARY_PROFILE:-}" ] && [ "$SIGN_IDENTITY" = "-" ]; the
   echo "RECORD_REPLAY_NOTARY_PROFILE requires RECORD_REPLAY_SIGN_IDENTITY" >&2
   exit 1
 fi
+LATEST_DMG="$OUTPUT_PARENT/FlowOnce-macOS-$PACKAGE_ARCHITECTURE.dmg"
+LATEST_ZIP="$OUTPUT_PARENT/FlowOnce-macOS-$PACKAGE_ARCHITECTURE.zip"
+
 if [ -e "$RELEASE_DIRECTORY" ] || [ -e "$DMG_PATH" ] || [ -e "$ZIP_PATH" ] || [ -e "$CHECKSUM_PATH" ]; then
   echo "Release output already exists for $RELEASE_BASENAME" >&2
   exit 1
@@ -135,8 +138,15 @@ fi
 mv "$STAGED_RELEASE" "$RELEASE_DIRECTORY"
 mv "$STAGED_DMG" "$DMG_PATH"
 mv "$STAGED_ZIP" "$ZIP_PATH"
-(CDPATH= cd -- "$OUTPUT_PARENT" && shasum -a 256 "$RELEASE_BASENAME.dmg" "$RELEASE_BASENAME.zip") > "$CHECKSUM_PATH"
+
+# Create unversioned copies for GitHub latest/download/ links
+cp "$DMG_PATH" "$LATEST_DMG"
+cp "$ZIP_PATH" "$LATEST_ZIP"
+
+(CDPATH= cd -- "$OUTPUT_PARENT" && shasum -a 256 "$RELEASE_BASENAME.dmg" "$RELEASE_BASENAME.zip" "FlowOnce-macOS-$PACKAGE_ARCHITECTURE.dmg" "FlowOnce-macOS-$PACKAGE_ARCHITECTURE.zip") > "$CHECKSUM_PATH"
 
 echo "$DMG_PATH"
 echo "$ZIP_PATH"
+echo "$LATEST_DMG"
+echo "$LATEST_ZIP"
 echo "$CHECKSUM_PATH"

@@ -37,10 +37,10 @@
 
 ## 第一次安装：只做一次
 
-### 第 1 步：安装
+### 第 1 步：下载并安装
 
-1. 双击收到的 `FlowOnce-版本-macOS-Apple-Silicon.dmg` 安装包。
-2. 在打开的窗口中，双击 **Install FlowOnce.app**。
+1. 打开 [github.com/ai-kangaroo/flowonce/releases](https://github.com/ai-kangaroo/flowonce/releases)，下载最新的 `FlowOnce-版本-macOS-Apple-Silicon.dmg`。
+2. 双击打开安装包，在打开的窗口中，双击 **Install FlowOnce.app**。
 3. 等待出现“FlowOnce 已安装”。
 4. 点击 **打开辅助功能设置**。
 

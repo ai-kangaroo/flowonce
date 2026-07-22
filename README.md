@@ -6,7 +6,7 @@
 
 ## One-click customer installation
 
-Use the architecture-specific DMG from `dist/`:
+Download the architecture-specific DMG from [GitHub Releases](https://github.com/ai-kangaroo/flowonce/releases):
 
 1. Open `FlowOnce-<version>-macOS-<Apple-Silicon|Intel>.dmg`.
 2. Double-click **Install FlowOnce.app**.
