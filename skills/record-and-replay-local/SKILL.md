@@ -3,7 +3,7 @@ name: record-and-replay-local
 slug: flowonce
 displayName: FlowOnce 录制即技能
 description: Use FlowOnce to record a user's macOS actions with local MCP tools and turn the captured event stream into a portable reusable agent skill. Use when the user mentions FlowOnce or asks an AI assistant to watch, record, learn, package, or replay a demonstrated Mac workflow.
-version: 0.3.1
+version: 0.3.2
 category: 科技开发
 platforms: [CodeBuddy, WorkBuddy, Qoder, QoderWork, Codex]
 ---
