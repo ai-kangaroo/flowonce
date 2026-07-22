@@ -1,0 +1,20 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Node
+node_modules/
+
+# Build output
+dist/
+bin/
+docs/
+
+# Tests (local only)
+tests/

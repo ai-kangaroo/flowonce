@@ -1,0 +1,11 @@
+interface:
+  display_name: "FlowOnce"
+  short_description: "Teach AI a Mac workflow once, then reuse it"
+  default_prompt: "Use $record-and-replay-local and FlowOnce to learn my Mac workflow and turn it into a portable reusable skill."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "record-and-replay-local"
+      description: "Controls the local FlowOnce macOS recorder"
+policy:
+  allow_implicit_invocation: true
