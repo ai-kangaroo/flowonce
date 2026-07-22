@@ -1,0 +1,78 @@
+# 贡献指南
+
+感谢你对 FlowOnce 的兴趣！本文档帮助你快速参与项目。
+
+## 开发环境
+
+### 前置要求
+
+- macOS（录制引擎依赖 Accessibility API）
+- Node.js 18+
+- Xcode Command Line Tools
+
+### 本地搭建
+
+```sh
+git clone https://github.com/ai-kangaroo/flowonce.git
+cd flowonce
+
+# 构建原生录制器
+./scripts/build.sh
+./scripts/install-recorder.sh
+
+# 验证安装
+node scripts/record-replay.mjs help
+```
+
+### 运行测试
+
+```sh
+./scripts/test.sh
+```
+
+## 贡献流程
+
+1. **Fork** 仓库并创建分支：`git checkout -b feat/your-feature`
+2. **开发**：保持改动聚焦，一个 PR 只做一件事
+3. **测试**：确保 `./scripts/test.sh` 通过
+4. **提交**：使用清晰的 commit message
+5. **PR**：填写 PR 模板，说明改动内容和原因
+
+### Commit 规范
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+类型：`feat`（新功能）、`fix`（修复）、`docs`（文档）、`refactor`（重构）、`chore`（杂项）
+
+### 代码风格
+
+- JavaScript：遵循现有风格，使用双引号，无分号
+- Shell：POSIX 兼容，`#!/bin/sh`
+- 文档：中英双语，英文为主，用户文档用中文
+
+## 目录结构
+
+```
+scripts/          构建脚本和核心工具链
+skills/           技能定义文件（SKILL.md）
+docs/             图片和分享文档
+tests/            测试（不纳入 git）
+```
+
+## 安全约束
+
+- **禁止**在代码、文档、测试中硬编码 API Key、Token 或密码
+- **禁止**在生成的技能包中包含敏感个人信息
+- 录制的事件流是本地文件，不要添加任何上传逻辑
+
+## 行为准则
+
+参与本项目请保持友善和尊重。骚扰、歧视或人身攻击不可接受。
+
+## License
+
+提交的代码将在 [MIT License](./LICENSE) 下发布。

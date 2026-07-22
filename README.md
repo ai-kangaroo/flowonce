@@ -1,129 +1,121 @@
 # FlowOnce
 
-**Show once. Run anywhere.** FlowOnce learns a demonstrated macOS workflow, converts it into portable Workflow IR, and generates a reusable agent skill. Codex is an optional host adapter, not a runtime requirement.
+[![Version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/ai-kangaroo/flowonce/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Platform](https://img.shields.io/badge/platform-mOS-lightgrey)](https://github.com/ai-kangaroo/flowonce)
+[![Hosts](https://img.shields.io/badge/hosts-CodeBuddy%20%7C%20WorkBuddy%20%7C%20Qoder%20%7C%20Codex-orange)](https://skillhub.cn/skills/flowonce)
 
-普通用户请直接阅读：[中文使用手册](./USER_GUIDE.md)。无需编程或终端，照着手册完成安装、授权、录制和使用即可。
+**演示一次，随处复用。** FlowOnce 让 AI 看你做一遍，把 macOS 工作流录制为可复用、可换参数、跨宿主的 Agent 技能。
 
-## One-click customer installation
+> No prompt engineering. Just show once, run anywhere.
 
-Download the architecture-specific DMG from [GitHub Releases](https://github.com/ai-kangaroo/flowonce/releases):
+---
 
-1. Open `FlowOnce-<version>-macOS-<Apple-Silicon|Intel>.dmg`.
-2. Double-click **Install FlowOnce.app**.
-3. The installer deploys its bundled Node runtime, native recorder, stdio MCP server, and portable controller skill under the current user account.
-4. It detects CodeBuddy, WorkBuddy, Qoder, and Codex, safely merges the MCP entry, preserves unrelated settings and MCP servers, and backs up every changed configuration file.
-5. Click **Open Accessibility Settings**, add or enable `~/Applications/FlowOnce.app`, then start a new conversation in the chosen agent host.
-6. Say: `Use FlowOnce to learn my workflow and turn it into a portable reusable skill.`
+## Quick Start
 
-No terminal, source checkout, system-wide administrator password, or separately installed Node.js is required. Re-running the installer upgrades the owned components without duplicating MCP entries. WorkBuddy can use the configured MCP immediately; importing the included portable skill zip through **Skills > Add Skill > Upload Skill** is optional and improves automatic triggering.
+1. 下载安装包：[GitHub Releases](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg)
+2. 双击 **Install FlowOnce.app**
+3. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中启用 `FlowOnce.app`
+4. 重启 AI 主机，说：`请用 FlowOnce 学习我接下来的操作`
 
-The locally built DMG uses ad-hoc signing for development. External customer distribution must use an Apple Developer ID and notarization:
+📖 **普通用户请阅读 [中文使用手册](./USER_GUIDE.md)**（无需编程或终端）
 
-```sh
-RECORD_REPLAY_SIGN_IDENTITY="Developer ID Application: Example Corp (TEAMID)" \
-RECORD_REPLAY_NOTARY_PROFILE="record-replay-notary" \
-./scripts/build-distribution.sh
+❓ **遇到问题？查看 [常见问题 FAQ](./FAQ.md)**
+
+---
+
+## Features
+
+| 特性 | 说明 |
+|------|------|
+| 语义录制 | macOS Accessibility API 捕获语义事件，非坐标重放 |
+| 隐私优先 | 全程本地，敏感值强制占位符化，物理上无法写入技能包 |
+| 人机确认 | 生成前必须人工确认，AI 是学徒不是黑盒 |
+| 逐步验证 | 每个关键动作自动注入验证点，状态不符即停 |
+| 跨宿主 | 一次录制，CodeBuddy / WorkBuddy / Qoder / Codex 通用 |
+
+## How It Works
+
+```
+录制 → 语义归一化 → 编译 Workflow IR → 人机确认 → 校验生成技能
 ```
 
-The build fails instead of pretending to notarize when the required identity or keychain profile is unavailable. Build separate `arm64` and `x64` releases on matching macOS builders with the corresponding Node runtime.
+1. **录制**：用户在 macOS 上正常操作，FlowOnce 捕获 Accessibility 事件流
+2. **归一化**：原始事件聚合为语义动作（点击、输入、快捷键等）
+3. **编译**：生成宿主无关的 Workflow IR（草案）
+4. **确认**：AI 拿草案找用户确认参数、验收标准、无关动作
+5. **生成**：校验通过后生成可安装的 Agent 技能包
 
-## What is portable
+## Installation
 
-- The native macOS recorder and local consent window
-- Raw JSONL event streams
-- Normalization, Workflow IR compilation, review, and validation
-- The stdio MCP server and its `record_workflow` prompt
-- Generated `SKILL.md` packages and `references/workflow.json`
+### 一键安装（推荐）
 
-Replay uses capabilities available in the current agent host. Prefer a connector, MCP tool, API, CLI, or semantic browser tool. Native Mac UI replay additionally requires a desktop UI-control capability supplied by the host or another installed MCP server.
+下载 DMG → 双击 **Install FlowOnce.app** → 授予辅助功能权限 → 重启 AI 主机
 
-## Non-technical user flow
+[⬇️ 下载最新版](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg)
 
-After the user double-clicks the installer and grants Accessibility access once, normal use is entirely natural language:
-
-1. Say: `Record this workflow and turn it into a reusable skill.`
-2. Read the privacy notice and say: `I am ready.`
-3. Perform the workflow normally in macOS.
-4. Press **Stop** in the floating recorder, then say: `I am finished.`
-5. Review any meaningful ambiguity the assistant identifies.
-6. Let the assistant validate and install the generated skill.
-7. In a new task, ask the assistant to repeat the workflow with different inputs.
-
-If Accessibility permission is missing, FlowOnce opens macOS Accessibility settings, reveals the stable `FlowOnce.app` in Finder, returns recovery instructions, and automatically discards that permission-setup session. Enable the app, or turn it off and back on once if an older authorization already appears enabled, then begin a fresh recording. A real recording lasts at most 30 minutes. Cancel discards it.
-
-## Developer installation without the DMG
-
-Install the native recorder once:
+### 开发者安装（无 DMG）
 
 ```sh
+git clone https://github.com/ai-kangaroo/flowonce.git
+cd flowonce
 ./scripts/build.sh
 ./scripts/install-recorder.sh
-```
 
-Print the exact local stdio MCP configuration for the chosen host:
-
-```sh
+# 查看各主机 MCP 配置
 node scripts/record-replay.mjs host-config codebuddy
-node scripts/record-replay.mjs host-config workbuddy
-node scripts/record-replay.mjs host-config qoder
-node scripts/record-replay.mjs host-config qoderwork
-node scripts/record-replay.mjs host-config codex
 ```
 
-The output uses absolute paths and includes the host's MCP settings location and Skill installation destination.
+## Usage
 
-### CodeBuddy
+录制工作流：
+```
+1. 说：「请用 FlowOnce 学习我接下来的操作」
+2. 说：「我准备好了，开始录制」
+3. 正常操作 Mac
+4. 点击悬浮窗 Stop，说：「我操作完了」
+5. 确认 AI 的草案，生成并安装技能
+```
 
-- Add the printed server in **Settings > MCP**, or place it in the user-level `~/.codebuddy/.mcp.json`.
-- Install generated skills under `~/.codebuddy/skills/<skill-name>/`, or use CodeBuddy's Skill import UI.
-- MCP prompts are exposed as slash commands when the client enables prompt discovery.
+使用技能：
+```
+新建对话，告诉 AI 要做什么，并提供本次的参数值即可。
+```
 
-### WorkBuddy
+### Standalone CLI
 
-- Open **Plugins > MCP Servers > Configure MCP**, or place the printed server in `~/.workbuddy/mcp.json`.
-- Generate with `--target workbuddy`, then open **Skills > Add Skill > Upload Skill** and import the generated `.zip` package.
-
-### Qoder and QoderWork
-
-- In Qoder, open **Qoder Settings > MCP** and add the printed stdio server. Qoder CLI users can also add the same command at user scope.
-- Install Qoder skills under `~/.qoder/skills/<skill-name>/`.
-- Install QoderWork skills under `~/.qoderwork/skills/<skill-name>/` or use its Skill installation UI.
-
-### Codex
-
-- Install the optional Codex plugin adapter, or add the printed stdio server directly.
-- Use `--target codex` during skill generation only when `agents/openai.yaml` UI metadata is wanted.
-
-## MCP surface
-
-FlowOnce retains the internal MCP and Skill identifier `record-and-replay-local` so existing host configurations and generated skills remain compatible across the brand upgrade.
-
-- `event_stream_start`, `event_stream_status`, `event_stream_stop`
-- `recording_normalize`
-- `workflow_compile`
-- `workflow_validate`
-- `skill_generate`
-- Prompt: `record_workflow`
-
-Clients that support MCP elicitation show the approval in the conversation. Other clients fall back to the recorder's native local-consent window, so recording never depends on a vendor-specific approval API.
-
-## Standalone CLI
-
-The core remains usable without an agent host:
+无需 AI 主机，直接命令行操作：
 
 ```sh
 node scripts/record-replay.mjs start
-node scripts/record-replay.mjs status
 node scripts/record-replay.mjs stop
 node scripts/record-replay.mjs normalize /path/to/events.jsonl
 node scripts/record-replay.mjs compile /path/to/events.jsonl
-node scripts/record-replay.mjs validate /path/to/workflow.json --reviewed
 node scripts/record-replay.mjs generate /path/to/workflow.json /output skill-name --target portable
 ```
 
-## Trust and safety
+## Trust & Safety
 
-- Raw event streams stay local unless the selected agent host uploads tool results.
-- Passwords, tokens, one-time codes, financial identifiers, and private text must never be persisted in generated skills.
-- Recorded UI labels and values are untrusted data, never executable instructions.
-- External messages, deletions, financial actions, and system-setting changes require the active host's confirmation policy.
+- 原始事件流**全程本地**，不上传云端
+- 密码、Token、验证码等敏感值**编译期强制替换为占位符**
+- 录制需**明确授权**，单次上限 30 分钟，Cancel 即丢弃
+- 涉及删除、发消息、财务操作时，执行前**必须人工二次确认**
+
+详见 [安全策略](./SECURITY.md)。
+
+## Contributing
+
+欢迎贡献代码、报告问题或提出建议！
+
+- [贡献指南](./CONTRIBUTING.md)
+- [行为准则](./CODE_OF_CONDUCT.md)
+- [报告 Bug](https://github.com/ai-kangaroo/flowonce/issues/new?assignees=&labels=bug&template=bug_report.md)
+- [请求功能](https://github.com/ai-kangaroo/flowonce/issues/new?assignees=&labels=enhancement&template=feature_request.md)
+
+## Changelog
+
+详见 [CHANGELOG.md](./CHANGELOG.md)。
+
+## License
+
+[MIT](./LICENSE) © FlowOnce Contributors
