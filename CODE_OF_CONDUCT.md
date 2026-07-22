@@ -25,7 +25,7 @@
 
 ## 执行
 
-违规行为可报告至 `community@ai-kangaroo.com`。所有投诉都会被及时审查和调查。
+违规行为可通过 [GitHub Issue](https://github.com/ai-kangaroo/flowonce/issues) 私下报告给维护者。所有投诉都会被及时审查和调查。
 
 ---
 

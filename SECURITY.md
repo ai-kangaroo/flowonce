@@ -4,7 +4,7 @@
 
 如果你发现安全漏洞，请**不要**公开提交 Issue。
 
-发送邮件至：`security@ai-kangaroo.com`
+发送邮件至：`https://github.com/ai-kangaroo/flowonce/security/advisories/new`（GitHub Security Advisory）
 
 请包含：
 - 漏洞描述
