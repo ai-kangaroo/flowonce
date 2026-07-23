@@ -62,6 +62,7 @@ fi
 mkdir -p "$PRODUCT/bin" "$PRODUCT/scripts" "$PRODUCT/skills/record-and-replay-local" \
   "$PAYLOAD/runtime/bin" "$PAYLOAD/licenses/node" "$PAYLOAD/skill-packages"
 ditto "$ROOT/bin/FlowOnce.app" "$PRODUCT/bin/FlowOnce.app"
+cp "$ROOT/release.json" "$PRODUCT/release.json"
 for script in \
   compile-workflow.mjs \
   event-stream-mcp.mjs \
@@ -92,7 +93,7 @@ CLANG_MODULE_CACHE_PATH="$ROOT/.build/module-cache" clang \
   -framework AppKit \
   "$ROOT/scripts/macos-installer.m" \
   -o "$INSTALLER_APP/Contents/MacOS/RecordAndReplayInstaller"
-cp "$ROOT/scripts/Installer-Info.plist" "$INSTALLER_APP/Contents/Info.plist"
+sed "s/__FLOWONCE_VERSION__/$VERSION/g" "$ROOT/scripts/Installer-Info.plist" > "$INSTALLER_APP/Contents/Info.plist"
 mkdir -p "$INSTALLER_APP/Contents/Resources/payload"
 ditto "$PAYLOAD" "$INSTALLER_APP/Contents/Resources/payload"
 
@@ -122,7 +123,7 @@ fi
 mkdir -p "$STAGED_RELEASE"
 ditto "$INSTALLER_APP" "$STAGED_RELEASE/Install FlowOnce.app"
 cp "$ROOT/README.md" "$STAGED_RELEASE/README.md"
-cp "$ROOT/USER_GUIDE.md" "$STAGED_RELEASE/FlowOnce 使用手册.txt"
+cp "$ROOT/docs/guides/user-guide.md" "$STAGED_RELEASE/FlowOnce 使用手册.txt"
 hdiutil create -volname "FlowOnce" -srcfolder "$STAGED_RELEASE" -format UDZO "$STAGED_DMG" >/dev/null
 ditto -c -k --sequesterRsrc --keepParent "$STAGED_RELEASE" "$STAGED_ZIP"
 

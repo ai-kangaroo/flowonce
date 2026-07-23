@@ -63,7 +63,7 @@ docs/
   images/         文档配图（演示截图等）
   guides/         用户手册（user-guide.md、faq.md）
   share/          公众号草稿（不纳入 git）
-tests/            测试（不纳入 git）
+tests/            可公开复现的测试与合成 fixtures
 bin/              构建产物
 dist/             分发制品（DMG、ZIP 等）
 ```

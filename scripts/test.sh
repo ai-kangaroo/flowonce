@@ -2,9 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-CODEX_SKILLS_ROOT="${CODEX_SKILLS_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills}"
-SKILL_VALIDATOR="${SKILL_VALIDATOR:-$CODEX_SKILLS_ROOT/.system/skill-creator/scripts/quick_validate.py}"
-PLUGIN_VALIDATOR="${PLUGIN_VALIDATOR:-$CODEX_SKILLS_ROOT/.system/plugin-creator/scripts/validate_plugin.py}"
+SKILL_VALIDATOR="${SKILL_VALIDATOR:-}"
+PLUGIN_VALIDATOR="${PLUGIN_VALIDATOR:-}"
 "$ROOT/scripts/build.sh"
 CLANG_MODULE_CACHE_PATH="$ROOT/.build/module-cache" clang \
   -Wall -Wextra -Werror -fobjc-arc -fsyntax-only \
@@ -32,14 +31,14 @@ node "$ROOT/tests/installer.mjs"
 if [ -n "${RECORD_REPLAY_RELEASE_PAYLOAD:-}" ]; then
   node "$ROOT/tests/release-package.mjs" "$RECORD_REPLAY_RELEASE_PAYLOAD"
 fi
-if [ -f "$SKILL_VALIDATOR" ]; then
+if [ -n "$SKILL_VALIDATOR" ] && [ -f "$SKILL_VALIDATOR" ]; then
   python3 "$SKILL_VALIDATOR" "$ROOT/skills/record-and-replay-local"
 else
-  printf '%s\n' "Codex skill validator not installed; skipped optional validation"
+  printf '%s\n' "Codex skill validation not requested; set SKILL_VALIDATOR to enable it"
 fi
-if [ -f "$PLUGIN_VALIDATOR" ]; then
+if [ -n "$PLUGIN_VALIDATOR" ] && [ -f "$PLUGIN_VALIDATOR" ]; then
   python3 "$PLUGIN_VALIDATOR" "$ROOT"
 else
-  printf '%s\n' "Codex plugin validator not installed; skipped optional validation"
+  printf '%s\n' "Codex plugin validation not requested; set PLUGIN_VALIDATOR to enable it"
 fi
 codesign -d -r- "$ROOT/bin/FlowOnce.app" 2>&1 | grep -F 'designated => identifier "local.record-and-replay"'

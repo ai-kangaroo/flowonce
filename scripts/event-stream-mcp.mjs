@@ -11,6 +11,10 @@ import { createRecorderService } from "./recorder-service.mjs";
 import { validateWorkflow } from "./workflow-validation.mjs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const release = JSON.parse(await readFile(join(root, "release.json"), "utf8"));
+if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(release.version ?? "")) {
+  throw new Error("release.json must contain a valid semantic version.");
+}
 const recorder = createRecorderService({ root });
 const execFileAsync = promisify(execFile);
 const elicitationTimeoutMs = 5 * 60 * 1000;
@@ -204,7 +208,7 @@ async function handleMessage(request) {
       result = {
         protocolVersion: request.params?.protocolVersion ?? "2025-06-18",
         capabilities: { tools: {}, prompts: { listChanged: false } },
-        serverInfo: { name: "record-and-replay-local", version: "0.3.1" }
+        serverInfo: { name: "record-and-replay-local", version: release.version }
       };
     } else if (request.method === "tools/list") {
       result = { tools: Object.entries(toolDefinitions).map(([name, definition]) => ({ name, ...definition })) };

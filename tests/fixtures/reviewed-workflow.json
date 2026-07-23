@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "status": "reviewed",
+  "source": "manual-recording",
+  "goal": "Enter provided text in a TextEdit document",
+  "applications": [{"bundleIdentifier": "com.apple.TextEdit", "name": "TextEdit"}],
+  "inputs": [{"name": "text", "type": "string", "required": true, "sensitive": false}],
+  "preconditions": ["TextEdit is open with an editable document."],
+  "steps": [
+    {
+      "id": "focus_composer",
+      "action": "click",
+      "application": {"name": "TextEdit", "bundleIdentifier": "com.apple.TextEdit"},
+      "target": {"role": "AXTextArea"}
+    },
+    {
+      "id": "enter_text",
+      "action": "input_text",
+      "application": {"name": "TextEdit", "bundleIdentifier": "com.apple.TextEdit"},
+      "target": {"role": "AXTextArea"},
+      "value": "{{text}}"
+    }
+  ],
+  "success": {"description": "Verify that the TextEdit document contains the provided text.", "requiresVerification": true},
+  "safety": {"confirmBefore": [], "neverPersistSensitiveValues": true}
+}
