@@ -14,7 +14,8 @@ node_modules/
 # Build output
 dist/
 bin/
-docs/
+# 公众号草稿（本地不提交）
+docs/share/
 
 # Tests (local only)
 tests/

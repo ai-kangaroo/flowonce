@@ -71,7 +71,7 @@ AI 生成技能前会拿着草案找你确认，包括：
 | WorkBuddy | Skills > Add Skill > Upload Skill（.zip 包） |
 | Qoder | 复制到 `~/.qoder/skills/<name>/` |
 | QoderWork | 复制到 `~/.qoderwork/skills/<name>/` 或 UI 安装 |
-| Codex | 安装可选插件适配器 |
+| Codex | 设置 → MCP 中启用 `flowonce`，安装器自动注册 |
 
 ### Q: 换了 AI 主机，技能需要重新录制吗？
 
@@ -84,6 +84,52 @@ AI 生成技能前会拿着草案找你确认，包括：
 ### Q: 如何更新已有技能？
 
 重新录制一遍操作流程，AI 会生成新版本的技能覆盖旧版本。或者在新对话中告诉 AI 需要修改已有技能的某个步骤。
+
+---
+
+## Codex 专属
+
+### Q: Codex 安装 FlowOnce 后找不到 MCP 工具？
+
+1. 运行安装器（重复安装不会产生重复配置）
+2. 完全退出 Codex 后重新打开
+3. 进入 Codex → **设置 → MCP**，确认 `flowonce` 已出现并处于启用状态
+4. 如果仍未出现，检查 `~/.codex/mcp.json` 中是否包含 flowonce 的配置项
+
+### Q: Codex 中录制和回放流程和其他主机一样吗？
+
+流程完全一致。"请使用 FlowOnce 学习……"开头即可触发录制，生成技能后用自然语言描述目标和参数即可回放。Codex 通过 MCP 原生支持 FlowOnce，无需额外安装插件。
+
+![Codex 中 FlowOnce 录制与回放](../images/FlowOnce录制与回放.png)
+
+---
+
+## 维护管理
+
+### Q: 如何升级 FlowOnce 到新版本？
+
+下载最新 DMG 安装包，双击 **Install FlowOnce.app** 即可覆盖安装。已录制的技能和配置文件不会被覆盖。升级后请完全退出并重新打开 AI 主机。
+
+### Q: 如何卸载 FlowOnce？
+
+1. 删除 `~/Applications/FlowOnce.app`
+2. （可选）删除录制数据和配置：`rm -rf ~/.flowonce/`
+3. （可选）删除各 AI 主机的 MCP 配置中 flowonce 相关条目
+4. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中移除 FlowOnce 的权限
+
+### Q: 录制的技能保存在哪里？如何手动删除？
+
+生成的技能会安装在对应 AI 主机的技能目录下：
+
+| 主机 | 技能目录 |
+|------|----------|
+| CodeBuddy | `~/.codebuddy/skills/<skill-name>/` |
+| WorkBuddy | 通过 Skills 面板管理 |
+| Qoder | `~/.qoder/skills/<skill-name>/` |
+| QoderWork | `~/.qoderwork/skills/<skill-name>/` 或 UI 安装 |
+| Codex | 通过设置 → MCP 管理 |
+
+删除对应目录即可移除技能。原始录制事件流保存在 `~/.flowonce/` 下，可随时查看或删除。
 
 ---
 

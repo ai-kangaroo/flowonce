@@ -58,9 +58,14 @@ node scripts/record-replay.mjs help
 
 ```
 scripts/          构建脚本和核心工具链
-skills/           技能定义文件（SKILL.md）
-docs/             图片和分享文档
+skills/           技能定义文件（SKILL.md + agents/）
+docs/
+  images/         文档配图（演示截图等）
+  guides/         用户手册（user-guide.md、faq.md）
+  share/          公众号草稿（不纳入 git）
 tests/            测试（不纳入 git）
+bin/              构建产物
+dist/             分发制品（DMG、ZIP 等）
 ```
 
 ## 安全约束

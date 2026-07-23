@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - GitHub `latest/download/` fixed links for unversioned DMG/ZIP assets
-- Explicit download URLs in SKILL.md, USER_GUIDE.md, and README.md
+- Explicit download URLs in SKILL.md, docs/guides/user-guide.md, and README.md
 - Unversioned `FlowOnce-macOS-<arch>.dmg/.zip` copies generated during build
 
 ### Fixed
@@ -26,4 +26,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-host support: CodeBuddy, WorkBuddy, Qoder, QoderWork, Codex
 - Standalone CLI (`node scripts/record-replay.mjs`)
 - Privacy-first design: local-only event streams, sensitive value redaction, mandatory human review
-- Chinese user guide (`USER_GUIDE.md`)
+- Chinese user guide (`docs/guides/user-guide.md`)

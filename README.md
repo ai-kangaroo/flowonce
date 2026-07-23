@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/ai-kangaroo/flowonce/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-mOS-lightgrey)](https://github.com/ai-kangaroo/flowonce)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://github.com/ai-kangaroo/flowonce)
 [![Hosts](https://img.shields.io/badge/hosts-CodeBuddy%20%7C%20WorkBuddy%20%7C%20Qoder%20%7C%20Codex-orange)](https://skillhub.cn/skills/flowonce)
 
 **演示一次，随处复用。** FlowOnce 让 AI 看你做一遍，把 macOS 工作流录制为可复用、可换参数、跨宿主的 Agent 技能。
@@ -18,9 +18,9 @@
 3. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中启用 `FlowOnce.app`
 4. 重启 AI 主机，说：`请用 FlowOnce 学习我接下来的操作`
 
-📖 **普通用户请阅读 [中文使用手册](./USER_GUIDE.md)**（无需编程或终端）
+📖 **普通用户请阅读 [中文使用手册](./docs/guides/user-guide.md)**（无需编程或终端）
 
-❓ **遇到问题？查看 [常见问题 FAQ](./FAQ.md)**
+❓ **遇到问题？查看 [常见问题 FAQ](./docs/guides/faq.md)**
 
 ---
 

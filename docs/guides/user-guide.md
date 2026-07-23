@@ -2,9 +2,9 @@
 
 **演示一次，随处复用。**
 
-适用于：macOS，以及 CodeBuddy、WorkBuddy、Qoder 或 Codex。
+适用于：macOS，以及 CodeBuddy、WorkBuddy、Qoder、QoderWork 或 Codex。
 
-不需要会编程，不需要打开终端。第一次安装大约需要 5 分钟，以后每次只要告诉 AI"开始录制"即可。
+不需要会编程，日常使用无需打开终端。第一次安装大约需要 5 分钟，以后每次只要告诉 AI"开始录制"即可。
 
 ## 最短使用方法
 
@@ -89,7 +89,9 @@ xattr -cr /path/to/Install\ FlowOnce.app
 - CodeBuddy
 - WorkBuddy
 - Qoder
-- Codex
+- **Codex**：首次使用需在设置中启用 FlowOnce MCP 工具。打开 Codex → 设置 → MCP，确认 `flowonce` 已启用。如果未出现，运行一次安装器后重启 Codex。
+
+  ![FlowOnce 在 Codex 中的安装过程](../images/FlowOnce安装记录.png)
 
 如果安装 FlowOnce 之后才安装上述 AI 软件，请再运行一次安装器。重复安装不会产生重复配置。
 
@@ -216,6 +218,13 @@ MCP 已经可以使用时，可以先在 WorkBuddy 的 MCP/工具列表中选择
 `~/Library/Application Support/FlowOnce/current/share/FlowOnce-Controller.zip`
 
 在文件选择窗口按 **Command + Shift + G**，粘贴上面的路径即可直接找到它。
+
+### Codex 中找不到 FlowOnce 工具
+
+1. 打开 Codex → **设置 → MCP**
+2. 确认列表中能看到 `flowonce` 并已启用
+3. 如果没有，运行一次安装器（重复安装不会产生重复配置），然后完全退出并重启 Codex
+4. 重启后在 MCP 设置中确认出现 `flowonce`，再新建对话说"请使用 FlowOnce 学习……"
 
 ### 还是无法解决
 
