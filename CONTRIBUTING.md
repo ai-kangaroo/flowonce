@@ -35,8 +35,32 @@ node scripts/record-replay.mjs help
 1. **Fork** 仓库并创建分支：`git checkout -b feat/your-feature`
 2. **开发**：保持改动聚焦，一个 PR 只做一件事
 3. **测试**：确保 `./scripts/test.sh` 通过
-4. **提交**：使用清晰的 commit message
-5. **PR**：填写 PR 模板，说明改动内容和原因
+4. **TRACE 自检**：SKILL.md 发生重大修改时，运行 TRACE 五维度自检（见下方）
+5. **提交**：使用清晰的 commit message
+6. **PR**：填写 PR 模板，说明改动内容和原因
+
+### TRACE 自检（发布前质量闸门）
+
+每次修改 `skills/record-and-replay-local/SKILL.md` 核心内容后，必须先通过 TRACE 五维度自检，确保全部 20 项达标（≥5.0）后再推送更新到 SkillHub。
+
+**触发方式**：
+```
+对 /Users/acho/IdeaProjects/flowonce/skills/record-and-replay-local/SKILL.md 做全量 TRACE 自检
+```
+
+**一句话流程**：读取 SKILL.md → 对照20个检查项逐项打分 → 找出 <5.0 的子项 → 修改 → 重打分 → 全部 5.0 才结束。
+
+**五维度速查**：
+
+| 维度 | 核心问题 | 关键检查项 |
+|------|---------|-----------|
+| **T·Trust** | 能不能放心用？ | 国内适配、安全性、边界透明、数据隐私 |
+| **R·Reliability** | 能不能稳定用？ | 异常处理、功能完善、运行稳定、降级兜底 |
+| **A·Adaptability** | 该不该在这个场景用？ | 边界定义、触发精确度、受众广度、定制化 |
+| **C·Convention** | 能不能被理解？ | 渐进式披露、结构清晰、反模式说明、FAQ 深度 |
+| **E·Effectiveness** | 是否真正解决问题？ | 输出准确性、内容完整度、创造力增值、开箱即用 |
+
+详细评分标准见 skill-trace-checker 的 `references/trace-criteria-detail.md`。
 
 ### Commit 规范
 

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Troubleshooting / 常见问题 section covering installation, recording, and skill generation
 - Privacy notice clarifying all data stays local
 - SkillHub 一键安装提示 for domestic users
+- Intel (x64) 版本构建支持，Release 同时提供 Apple Silicon + Intel 双架构
+- CONTRIBUTING.md 增加 TRACE 自检流程作为发布前质量闸门
 
 ### Fixed
 - Publish the reproducible test suite and synthetic fixtures with the repository
