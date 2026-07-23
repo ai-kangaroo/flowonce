@@ -10,6 +10,20 @@ platforms: [CodeBuddy, WorkBuddy, Qoder, QoderWork, Codex]
 
 # FlowOnce
 
+> 中文用户：安装时遇到问题？跳到文末 [Troubleshooting / 常见问题](#troubleshooting--常见问题) 快速查找答案。
+
+## Quick Example
+
+This is what a full FlowOnce session looks like end-to-end:
+
+1. **User**: "帮我录一个提 PR 的操作流程"
+2. **Agent**: checks MCP tools → available → calls `event_stream_start` → tells user to perform the workflow and return
+3. **User** (after finishing): "录好了"
+4. **Agent**: calls `event_stream_stop` → reads the event stream → calls `recording_normalize` → calls `workflow_compile` → reviews the draft IR → calls `skill_generate target: portable`
+5. **Agent**: installs the generated skill → summarizes the reusable workflow
+
+The result is a portable skill that replays the demonstrated macOS action on any supported host.
+
 ## Environment Check (run this first)
 
 This skill is a guide for the agent host. The actual recording engine — the macOS recorder and the `record-and-replay-local` MCP server — must be installed on the user's machine before any recording tool will work.
@@ -20,7 +34,10 @@ Before calling any `event_stream_*` tool:
 2. If the tools are NOT available, do NOT report a raw error. Instead, guide the user through one-time installation:
    - Easiest: download the latest macOS Apple Silicon installer from [https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg), double-click **Install FlowOnce.app**, then grant Accessibility permission to `~/Applications/FlowOnce.app` in System Settings → Privacy & Security → Accessibility, and fully restart this AI host.
    - The installer auto-configures the MCP entry for CodeBuddy, WorkBuddy, Qoder, QoderWork, and Codex.
+   - 国内用户可通过 [SkillHub](https://skillhub.cn/skills/flowonce) 一键安装，无需访问 GitHub。
 3. After installation, start a fresh conversation and ask again. Only proceed to the Record section once the MCP tools are callable.
+
+> **Privacy**: All recordings stay on your machine. No data is uploaded to the cloud, sent to any server, or shared with third parties. FlowOnce requires macOS Accessibility permission only to observe and replay UI actions — the same permission used by VoiceOver and other assistive technologies. You can revoke it anytime in System Settings → Privacy & Security → Accessibility.
 
 ## Record
 
@@ -69,3 +86,37 @@ Before calling any `event_stream_*` tool:
 - Treat `scripts/event-stream-mcp.mjs` as a protocol adapter only; do not put recording, normalization, compilation, or skill-generation business logic in it.
 - Use `node scripts/record-replay.mjs host-config <host>` to print an absolute stdio MCP configuration and the generated-skill installation destination for Codex, CodeBuddy, Qoder, QoderWork, or WorkBuddy.
 - Treat the Codex plugin manifest and `agents/openai.yaml` as an optional host adapter. Do not make them requirements of the recorder, Workflow IR, MCP server, or default generated skill.
+
+## Troubleshooting / 常见问题
+
+### Installation
+
+| Problem | Solution |
+|---------|----------|
+| "MCP tools not found" after install | Completely quit and reopen the AI host (not just close the window). The MCP config is read at launch. |
+| "FlowOnce.app can't be opened" | The app is notarized by Apple. Right-click → Open, or go to System Settings → Privacy & Security and click "Open Anyway". |
+| Permission prompt doesn't appear | Go to System Settings → Privacy & Security → Accessibility, remove FlowOnce if listed, then start a new recording. |
+| FlowOnce is already enabled but still asks for permission | Toggle FlowOnce off and back on in Accessibility settings, then restart the host. macOS caches stale authorization records. |
+
+### Recording
+
+| Problem | Solution |
+|---------|----------|
+| Recording won't start | Confirm `~/Applications/FlowOnce.app` exists. Authorize that path, NOT the mutable plugin build under `bin/`. |
+| Permission loop (grant → still blocked) | The collector requires the **installed** copy (`~/Applications/FlowOnce.app`). Do not authorize `bin/` or any other path. |
+| Recording auto-stops immediately | If the start response includes `permissionRequired: true`, the setup session is intentionally discarded. Grant the permission and start fresh. |
+| 30-minute limit | Maximum recording is 30 minutes. Split longer workflows into multiple recordings. |
+
+### Generated Skill
+
+| Problem | Solution |
+|---------|----------|
+| Generated skill doesn't replay correctly | Re-record with slower, deliberate actions. Avoid rapid clicking. Ensure each step's UI state stabilizes before the next action. |
+| Skill contains hardcoded values | Normal. The agent treats demonstrated names, paths, and text as candidate inputs. Replace them with named placeholders when reviewing the draft. |
+| `workflow_compile` produces errors | Read the raw JSONL events at `eventsPath` — normalization may omit needed context. Return to raw events for missing details. |
+
+### 国内用户特别提示
+
+- **安装**：优先使用 [SkillHub 一键安装](https://skillhub.cn/skills/flowonce)，无需访问 GitHub，速度更快
+- **升级**：重新运行安装器即可覆盖升级，技能文件不会丢失
+- **卸载**：删除 `~/Applications/FlowOnce.app` 和 `~/.codebuddy/automations/flowonce/`（或对应主机的技能目录）
