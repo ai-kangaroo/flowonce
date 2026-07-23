@@ -1,9 +1,9 @@
 # FlowOnce
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/ai-kangaroo/flowonce/releases)
+[![Version](https://img.shields.io/badge/version-0.3.3-blue)](https://github.com/ai-kangaroo/flowonce/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://github.com/ai-kangaroo/flowonce)
-[![Hosts](https://img.shields.io/badge/hosts-CodeBuddy%20%7C%20WorkBuddy%20%7C%20Qoder%20%7C%20Codex-orange)](https://skillhub.cn/skills/flowonce)
+[![Hosts](https://img.shields.io/badge/hosts-CodeBuddy%20%7C%20WorkBuddy%20%7C%20Qoder%20%7C%20QoderWork%20%7C%20Codex-orange)](https://skillhub.cn/skills/flowonce)
 
 **演示一次，随处复用。** FlowOnce 让 AI 看你做一遍，把 macOS 工作流录制为可复用、可换参数、跨宿主的 Agent 技能。
 
@@ -32,7 +32,7 @@
 | 隐私优先 | 全程本地，敏感值强制占位符化，物理上无法写入技能包 |
 | 人机确认 | 生成前必须人工确认，AI 是学徒不是黑盒 |
 | 逐步验证 | 每个关键动作自动注入验证点，状态不符即停 |
-| 跨宿主 | 一次录制，CodeBuddy / WorkBuddy / Qoder / Codex 通用 |
+| 跨宿主 | 一次录制，CodeBuddy / WorkBuddy / Qoder / QoderWork / Codex 通用 |
 
 ## How It Works
 

@@ -12,7 +12,7 @@
 
 1. 打开安装包，双击 **Install FlowOnce.app**。
 2. 按提示给 **FlowOnce.app** 打开"辅助功能"权限。
-3. 完全退出并重新打开 CodeBuddy、WorkBuddy、Qoder 或 Codex。
+3. 完全退出并重新打开 CodeBuddy、WorkBuddy、Qoder、QoderWork 或 Codex。
 
 教 AI 学会一项操作：
 
@@ -89,6 +89,7 @@ xattr -cr /path/to/Install\ FlowOnce.app
 - CodeBuddy
 - WorkBuddy
 - Qoder
+- QoderWork
 - **Codex**：首次使用需在设置中启用 FlowOnce MCP 工具。打开 Codex → 设置 → MCP，确认 `flowonce` 已启用。如果未出现，运行一次安装器后重启 Codex。
 
   ![FlowOnce 在 Codex 中的安装过程](../images/FlowOnce安装记录.png)

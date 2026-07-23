@@ -7,7 +7,7 @@
 确保已完成以下步骤：
 1. 双击 DMG 中的 **Install FlowOnce.app** 完成安装
 2. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中添加并启用 `~/Applications/FlowOnce.app`
-3. **完全退出并重新打开** AI 主机（CodeBuddy / WorkBuddy / Qoder / Codex）
+3. **完全退出并重新打开** AI 主机（CodeBuddy / WorkBuddy / Qoder / QoderWork / Codex）
 
 如果权限已开启但仍不工作，尝试**先关闭再重新开启**辅助功能开关，让 macOS 刷新授权记录。
 

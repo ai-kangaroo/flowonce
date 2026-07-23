@@ -3,7 +3,7 @@ name: record-and-replay-local
 slug: flowonce
 displayName: FlowOnce 录制即技能
 description: Use FlowOnce to record a user's macOS actions with local MCP tools and turn the captured event stream into a portable reusable agent skill. Use when the user mentions FlowOnce or asks an AI assistant to watch, record, learn, package, or replay a demonstrated Mac workflow.
-version: 0.3.2
+version: 0.3.3
 category: 科技开发
 platforms: [CodeBuddy, WorkBuddy, Qoder, QoderWork, Codex]
 ---
@@ -19,7 +19,7 @@ Before calling any `event_stream_*` tool:
 1. Check whether the `record-and-replay-local` MCP server is available in the current host (its tools `event_stream_start`, `event_stream_status`, `event_stream_stop`, `recording_normalize`, `workflow_compile`, `workflow_validate`, `skill_generate` are callable).
 2. If the tools are NOT available, do NOT report a raw error. Instead, guide the user through one-time installation:
    - Easiest: download the latest macOS Apple Silicon installer from [https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg), double-click **Install FlowOnce.app**, then grant Accessibility permission to `~/Applications/FlowOnce.app` in System Settings → Privacy & Security → Accessibility, and fully restart this AI host.
-   - The installer auto-configures the MCP entry for CodeBuddy, WorkBuddy, Qoder, and Codex.
+   - The installer auto-configures the MCP entry for CodeBuddy, WorkBuddy, Qoder, QoderWork, and Codex.
 3. After installation, start a fresh conversation and ask again. Only proceed to the Record section once the MCP tools are callable.
 
 ## Record
