@@ -52,9 +52,9 @@ Before calling any `event_stream_*` tool:
 3. After installation, start a fresh conversation and ask again. Only proceed to the Record section once the MCP tools are callable.
 
 > **Privacy**: 录制数据全生命周期说明：
-> - **录制时**：事件流以 JSONL 格式写入系统临时目录（`$TMPDIR/flowonce/`），不截图、不录音、不访问剪切板
+> - **录制时**：事件流以 JSONL 格式写入系统临时目录，不截图、不录音、不访问剪切板
 > - **编译时**：Agent 读取事件文件进行 Workflow IR 编译，原始 JSONL 和编译产物均存储在本地
-> - **生成后**：原始事件流在会话结束后自动清理；生成的 Skill 文件不含任何录制原始数据
+> - **生成后**：原始事件流保留在临时目录供回放验证，由 macOS 在需要时自动清理；生成的 Skill 文件不含任何录制原始数据
 > - **全程**：无上传逻辑，无遥测上报，无后端服务器，数据不离开本机
 >
 > FlowOnce requires macOS Accessibility permission only to observe and replay UI actions — the same permission used by VoiceOver and other assistive technologies. You can revoke it anytime in System Settings → Privacy & Security → Accessibility.
@@ -113,8 +113,10 @@ FlowOnce 根据用户意图自动路由到对应流程：
 
 - **生成平台**：录制后指定 `target: portable`（默认，跨平台通用）/ `target: workbuddy`（含上传包）/ `target: codex`（含 OpenAI 元数据）
 - **回放后端**：生成技能时选择执行后端——优先专用 connector/API/CLI，其次语义浏览器自动化，最后原生 UI 控制
-- **严格模式**：`"完整审查"` → Agent 在审查 Workflow IR 时逐步骤确认，不跳过任何有歧义的地方
-- **快速模式**：`"快速生成"` → Agent 假设演示的操作流正确，跳过详细审查直接生成技能
+- **严格模式**：`"完整审查"` → Agent 在审查 Workflow IR 时逐步骤确认，不跳过任何有歧义的地方（见下方 Interpret / Create 行为约束）
+- **快速模式**：`"快速生成"` → Agent 假设演示的操作流正确，跳过详细审查直接生成技能（见下方 Interpret / Create 行为约束）
+
+> **Agent 行为约束**：若用户选择"严格模式"，Interpret 和 Create 阶段必须逐步骤展示 Workflow IR 并等待确认，任何歧义必须停下来问用户，不可假设。若用户选择"快速模式"，Interpret 可跳过详细审查直接调用 `workflow_compile` + `skill_generate`，只在生成后简要汇总。默认（未指定）按 SKILL.md 标准流程执行，即完整审查。
 
 ## 安全性约束
 
