@@ -1,10 +1,10 @@
 ---
 name: record-and-replay-local
-description: Use FlowOnce to record a user's macOS actions with local MCP tools and turn the captured event stream into a portable reusable agent skill. Use when the user mentions FlowOnce or asks an AI assistant to watch, record, learn, package, or replay a demonstrated Mac workflow.
+description: Use FlowOnce to automatically prepare a local macOS recorder, learn a user's demonstrated actions, and turn the captured event stream into an installed reusable agent skill that is verified once with changed safe inputs. Use when the user mentions FlowOnce or asks an AI assistant to watch, record, learn, package, distill, or replay a demonstrated Mac workflow. 当用户提到 FlowOnce、录制操作、录屏、学习流程、演示一遍、回放技能、自动化操作、批量操作时触发。
 metadata:
   slug: flowonce
   displayName: FlowOnce 录制即技能
-  version: 0.3.3
+  version: 0.4.0
   category: 科技开发
   platforms: [CodeBuddy, WorkBuddy, Qoder, QoderWork, Codex]
 ---
@@ -17,7 +17,7 @@ FlowOnce 是一个 **macOS 桌面操作录制引擎**。你演示一遍操作，
 
 ## 快速开始
 
-**安装完成后 30 秒开始**：说"初始化 FlowOnce"完成一次自检 → 说"帮我录一个 XX 操作" → 执行操作 → 回来说"录好了" → AI 自动生成并试跑技能。
+**安装 Skill 后直接开始**：说"帮我录一个 XX 操作" → FlowOnce 自动准备本地引擎（首次只需允许一次 macOS 辅助功能权限）→ 执行操作 → 回来说"录好了" → AI 自动生成、安装并用变化后的安全参数复现一次。
 
 ### 开场白示例（直接复制使用）
 
@@ -27,38 +27,53 @@ FlowOnce 是一个 **macOS 桌面操作录制引擎**。你演示一遍操作，
 ✅ "我演示一遍 PR 提交流程，你帮我生成一个自动化技能"
 ```
 
-## Quick Example
+## 完整流程示例
 
-This is what a full FlowOnce session looks like end-to-end:
+一次完整的 FlowOnce 会话如下：
 
-1. **User**: "帮我录一个提 PR 的操作流程"
-2. **Agent**: checks MCP tools → available → calls `event_stream_start` → tells user to perform the workflow and return
-3. **User** (after finishing): "录好了"
-4. **Agent**: calls `event_stream_stop` → reads the event stream → calls `recording_normalize` → calls `workflow_compile` → reviews the draft IR → calls `skill_generate target: portable`
-5. **Agent**: calls `skill_test_start` with different inputs → runs the generated skill with an available backend → calls `skill_test_finish`
-6. **Agent**: fixes and retries failed tests at most twice, installs the best verified skill, and reports `passed`, `checkpoint_passed`, or `unverified`
+1. **用户**：说 "帮我录一个提 PR 的操作流程"
+2. **AI**：自动运行就绪检查；如果本地工具缺失，自动运行内置 bootstrap 安装，仅要求用户完成 macOS 辅助功能授权
+3. **用户**（操作完成后）：说 "录好了"
+4. **AI**：调用 `event_stream_stop` → 读取事件流 → `recording_normalize` → `workflow_compile` → 审查草案 → `skill_generate target: portable`
+5. **AI**：用不同输入调用 `skill_test_start` → 执行生成的技能 → `skill_test_finish`
+6. **AI**：将变参安全试跑作为首次回放；失败时最多自动修订两轮，然后安装最终通过验证的技能
 
-The result is a portable skill with a local post-generation evaluation report. Replay still requires a suitable execution backend in the target host.
+最终产出：一个已安装的便携技能 + 本地评测报告。回放仍需目标宿主具备合适的执行后端。
 
-## Environment Check (run this first)
+## First Run: Prepare Automatically
 
-This skill is a guide for the agent host. The actual recording engine — the macOS recorder and the `record-and-replay-local` MCP server — must be installed on the user's machine before any recording tool will work.
+The controller Skill must remain usable before MCP exists. Never expose MCP, JSON, CPU architecture, config files, or installation paths to a beginner.
 
-Before calling any `event_stream_*` tool:
+Before recording:
 
-1. If `flowonce_doctor` is callable, call it with the current host before the first recording or whenever the user says "初始化 FlowOnce". Present its checks and single `nextAction`; do not make the user diagnose individual files.
-2. Check whether the `record-and-replay-local` MCP server is available in the current host (its tools `flowonce_doctor`, `event_stream_start`, `event_stream_status`, `event_stream_stop`, the asynchronous `recording_normalize_start`, `workflow_compile_start`, `skill_generate_start`, `flowonce_job_status`, plus `workflow_validate`, `skill_test_start`, `skill_test_finish`, and `skill_test_status` are callable).
-3. If the tools are NOT available, do NOT report a raw error. Instead, guide the user through one-time installation:
-   - Easiest: choose the installer for the Mac architecture — [Apple Silicon](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg) or [Intel](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Intel.dmg) — double-click **Install FlowOnce.app**, then grant Accessibility permission to `~/Applications/FlowOnce.app` in System Settings → Privacy & Security → Accessibility, and fully restart this AI host.
-   - The installer auto-configures the MCP entry for CodeBuddy, WorkBuddy, Qoder, and Codex. QoderWork uses its MCP settings for manual configuration.
-   - [SkillHub](https://skillhub.cn/skills/flowonce) installs the controller Skill, not the native recorder. First-time recording still requires the macOS installer above.
-4. After installation, fully restart the host, start a fresh conversation, and say "初始化 FlowOnce". Only proceed to the Record section when the doctor returns `ready: true`.
+1. If `flowonce_doctor` is callable, call it with the current host. Perform `automaticAction` without asking another question. Show only `requiredUserAction` when macOS or the host requires the user's own action.
+2. If MCP tools are unavailable but local shell execution is available, run the bundled `scripts/flowonce-bootstrap.sh` from this Skill directory. It selects the Mac architecture, downloads the matching official release, verifies SHA-256 and code-signature integrity, installs the stable local engine, and opens the required macOS settings. A free preview release may be ad-hoc signed rather than Apple-notarized. If bootstrap reports `gatekeeper_approval_required`, relay only its `nextAction`; after the user clicks **仍要打开 / Open Anyway** and returns, rerun bootstrap. Never ask the user to disable Gatekeeper, change the global app-security policy, use Terminal, or run `xattr`.
+3. After bootstrap, continue in the same conversation through `~/Library/Application Support/FlowOnce/bin/flowonce`; do not force a host restart for the first Aha experience. Map its `start`, `status`, `stop`, `normalize`, `compile`, `generate`, `install`, and `test-*` commands to the equivalent workflow below. Prefer MCP automatically in later sessions when available.
+4. If neither MCP nor local shell execution is available, present one action only: open the signed FlowOnce installer selected for this Mac. Never ask the user to choose Apple Silicon versus Intel manually.
+5. Re-check automatically after the user grants Accessibility permission. Do not ask them to type "初始化 FlowOnce" or diagnose individual files.
+6. Before asking the user to demonstrate, inventory execution backends actually callable in the current host. Call `replay_preflight` with the target application, real backend names, and `firstUse: true` for a new user; in CLI fallback, run `flowonce preflight "<application>" <kind> <backend...>`. Never invent a backend or wait until after generation to reveal that replay is unavailable.
+
+The bootstrap is idempotent. Re-running it must reuse a ready installation and never erase generated skills.
+
+## First-use Aha Contract
+
+The first-use success metric is not "recording saved" or "skill generated." It is: **the generated skill successfully repeats the demonstrated outcome once with changed, safe inputs.**
+
+- If the user supplied a real workflow, use it.
+- If the user only asks to try FlowOnce, choose a 30–60 second reversible workflow supported by an actually available backend, such as searching for a different file in Finder or searching a different term in an already-open browser.
+- Prefer the exact `recommendedDemo` returned by `replay_preflight`: TextEdit changed-text replay for desktop control, changed-keyword search for browser control, or a read-only search for a connector. Do not offer a demo whose backend is absent.
+- Avoid external messages, deletion, payment, publishing, account changes, and secrets in the first-use demonstration.
+- Ask at most one consolidated clarification question, only when a low-confidence inference materially changes the outcome.
+- Use the post-generation safe test with changed inputs as the first replay. A full pass is the Aha moment; install automatically and explain that the user demonstrated once and FlowOnce reused it without code.
+- If no replay backend is available, preserve the skill but report it as unverified; never pretend the Aha moment occurred.
 
 > **Privacy**: 录制数据全生命周期说明：
 > - **录制时**：事件流以 JSONL 格式写入系统临时目录，不截图、不录音、不访问剪切板
 > - **编译时**：Agent 读取事件文件进行 Workflow IR 编译，原始 JSONL 和编译产物均存储在本地
 > - **生成后**：原始事件流保留在临时目录供回放验证，由 macOS 在需要时自动清理；生成的 Skill 文件不含任何录制原始数据
 > - **试跑时**：评测报告保存在本机 `~/Library/Application Support/FlowOnce/evaluations/`，只记录输入是否提供，不保存测试输入值
+> - **体验漏斗**：本机 `journey/journey.json` 只记录阶段、成功/失败、耗时和错误码，不记录应用内容、窗口标题、输入值、联系人或文件名，也不自动上传
+> - **首次准备时**：bootstrap 仅访问 FlowOnce 官方 GitHub Release 下载与当前版本、Mac 架构匹配的安装包和校验文件，不上传设备信息或录制内容
 > - **FlowOnce 组件**：无上传逻辑、无遥测上报、无后端服务器；AI 宿主读取事件后的处理受宿主自身的数据策略约束
 >
 > FlowOnce requires macOS Accessibility permission to observe the demonstrated UI actions. Replay is performed by the selected host backend, which may require its own permissions. You can revoke FlowOnce access anytime in System Settings → Privacy & Security → Accessibility.
@@ -79,7 +94,7 @@ FlowOnce 专注于 **macOS 桌面操作录制与技能生成**，以下清晰定
 
 ### ⚠️ 需要提供
 
-1. **安装了 FlowOnce 桌面引擎的 macOS 主机**：从 [GitHub Release](https://github.com/ai-kangaroo/flowonce/releases) 安装；SkillHub 仅安装控制器 Skill
+1. **macOS 主机**：首次使用时控制 Skill 自动准备 FlowOnce 桌面引擎；用户只需完成系统要求的辅助功能授权
 2. **录制目标应用**：需在录制前打开并准备好要操作的应用（如已登录的企业微信、已打开的目标网页）
 3. **明确的业务流程**：录制前想清楚要演示的操作步骤，避免录制中频繁犹豫和撤销
 
@@ -97,12 +112,12 @@ FlowOnce 根据用户意图自动路由到对应流程：
 
 | 用户说（中文） | 用户说（English） | 路由流程 | 说明 |
 |------|------|------|------|
-| "初始化 FlowOnce" / "本地可以用了吗" | "Initialize FlowOnce" / "Is FlowOnce ready?" | → `flowonce_doctor` | 一次检查版本、权限、MCP 和 Skill |
+| "初始化 FlowOnce" / "本地可以用了吗" | "Initialize FlowOnce" / "Is FlowOnce ready?" | → automatic prepare | 自动修复可修复项，只展示一个必须由用户完成的动作 |
 | "帮我录一个 XX 操作" / "录个流程" | "Record a workflow" / "Record me doing X" | → Record | 录制新操作流 |
 | "录好了" / "录完了" / "停止了" | "Done recording" / "Finished" / "I'm back" | → Interpret | 停止录制并编译 |
-| 提到 FlowOnce 但不确定状态 | "FlowOnce" / "record" / "replay" | → Environment Check | 先检查安装状态 |
+| 提到 FlowOnce 但不确定状态 | "FlowOnce" / "record" / "replay" | → First Run: Prepare Automatically | 自动准备后继续，不要求另开对话 |
 | "回放之前录的 XX" | "Replay the X skill" / "Run the recorded skill" | → 使用已生成的 Skill | 不经过录制流程 |
-| "帮我检查安装状态" / "MCP 工具不可用" | "Check if FlowOnce is installed" | → Environment Check → Install guide | 引导安装 |
+| "帮我检查安装状态" / "MCP 工具不可用" | "Check if FlowOnce is installed" | → automatic prepare | 优先自动修复，不暴露底层术语 |
 
 ## 受众说明
 
@@ -122,7 +137,7 @@ FlowOnce 根据用户意图自动路由到对应流程：
 - **严格模式**：`"完整审查"` → Agent 在审查 Workflow IR 时逐步骤确认，不跳过任何有歧义的地方（见下方 Interpret / Create 行为约束）
 - **快速模式**：`"快速生成"` → Agent 假设演示的操作流正确，跳过详细审查直接生成技能（见下方 Interpret / Create 行为约束）
 
-> **Agent 行为约束**：若用户选择"严格模式"，Interpret 和 Create 阶段必须逐步骤展示 Workflow IR 并等待确认，任何歧义必须停下来问用户，不可假设。若用户选择"快速模式"，Interpret 可跳过详细审查直接调用 `workflow_compile` + `skill_generate`，只在生成后简要汇总。默认（未指定）按 SKILL.md 标准流程执行，即完整审查。
+> **Agent 行为约束**：若用户选择"严格模式"，Interpret 和 Create 阶段必须逐步骤展示 Workflow IR 并等待确认，任何歧义必须停下来问用户，不可假设。若用户选择"快速模式"，Interpret 可跳过详细审查直接调用 `workflow_compile` + `skill_generate`，只在生成后简要汇总。默认采用置信度审查：高置信度推断自动采用，只把会实质改变结果的低置信度问题合并成一次提问，不展示完整 Workflow IR。
 
 ## 安全性约束
 
@@ -140,7 +155,7 @@ FlowOnce 根据用户意图自动路由到对应流程：
 
 - Call `event_stream_start` only after the user says they are ready. Starting may show a macOS Accessibility permission prompt and a floating recording-controls panel.
 - Continue only when start returns `isRecording: true` and `accessibilityTrusted: true`. If start reports an error, explain it and do not pretend recording began.
-- On first use, the collector opens the Accessibility privacy pane and reveals its stable installed copy in Finder. Tell the user to add and enable `~/Applications/FlowOnce.app`, then start a fresh recording. Do not authorize the mutable plugin build under `bin/` and do not toggle the setting for the user.
+- On first use, bootstrap opens the Accessibility privacy pane for the stable installed copy. Ask the user only to enable FlowOnce, then re-check automatically. Do not authorize a mutable plugin build under `bin/` and do not toggle the setting for the user.
 - If start returns `permissionRequired: true` or `accessibilityTrusted: false`, relay `permissionInstructions`, explain that FlowOnce automatically discarded the permission-setup session, ask the user to grant the displayed permission, and start a fresh recording. If FlowOnce already appears enabled, tell the user to turn it off and back on once so macOS refreshes an older authorization record. Do not ask the user to stop or cancel that session, and never interpret an event stream from it.
 - After a successful start, end the turn. Tell the user recording lasts at most 30 minutes and ask them to return when finished.
 - Do not poll. Call `event_stream_status` only when asked for status or when the user returns.
@@ -157,10 +172,12 @@ FlowOnce 根据用户意图自动路由到对应流程：
 - Reconstruct the intended outcome from app/window changes, accessibility trees, mouse actions, and keyboard events.
 - For input-method composition, prefer the final Accessibility value from the normalized `input_text` action over individual physical keystrokes.
 - Treat demonstrated recipient names, file paths, search terms, and message bodies as candidate inputs instead of fixed values.
+- Keep compiler-provided high-confidence semantic names such as `search_term`, `recipient`, `message`, and `file_path`. Resolve only inputs marked `confidence: low`; do not rename a clear semantic input back to `text_input_N`.
 - Mark every external message, deletion, financial action, system-setting change, and overwrite of existing content on its actual step with `safety.requiresConfirmation: true` and the matching category. Surface the destination or affected resource before a live confirmation. Do not rely only on the top-level safety list.
 - Never place passwords, tokens, one-time codes, financial identifiers, or private personal content in a generated skill. Replace sensitive values with named placeholders.
 - If an ambiguity would materially change the workflow, explain it and ask a concise follow-up question. Record again only when the captured evidence is insufficient.
 - When the recording clearly establishes a reusable workflow, create or refine the skill by default. Do not stop at a summary, replay plan, or runbook.
+- After setting the goal, observable success condition, inputs, safety boundaries, and `status: reviewed`, call `workflow_summarize`. Show the returned beginner-facing card. Ask one consolidated question only when `needsUserClarification: true`; otherwise continue automatically.
 
 ## Create the Skill
 
@@ -175,14 +192,15 @@ FlowOnce 根据用户意图自动路由到对应流程：
 4. Call `workflow_validate` with the reviewed Workflow IR and `reviewed: true`. Fix every error, then call `skill_generate_start` with the reviewed object, output parent, skill name, `target: portable`, and a stable idempotency key. Poll `flowonce_job_status` until complete. Use the synchronous `skill_generate` only for known-small fixtures. Use `target: workbuddy` to add an uploadable zip or `target: codex` when OpenAI-specific UI metadata is explicitly wanted.
 5. For UI-control steps, specify stable app, window, role, identifier, title, or text targets; refresh state after changes; and include success verification. Avoid coordinate-only replay.
 6. Run the skill validator before reporting completion.
-7. Install the portable skill with the current host's Skill manager. CodeBuddy and Qoder accept `SKILL.md` folders; WorkBuddy can import a local skill package from Skills > Add Skill > Upload Skill.
-8. Summarize the generated skill's steps, inputs, assumptions, target host, and required execution backend for the user.
+7. Keep the generated path for testing. Do not ask the user to locate or import the folder.
+8. After Test and Refine selects the final version, install it automatically and summarize the outcome in beginner language.
 
 ## Test and Refine
 
 - After `skill_generate`, run one post-generation test unless the user explicitly asks to skip it. Do not call a structurally valid skill "fully verified" before an actual execution test.
 - Prefer different input values from the demonstration. If required values are missing, ask for them once in one concise message; never invent recipients, account identifiers, payment values, or other consequential inputs.
 - Preflight and choose an actually available connector, browser controller, API, CLI, or semantic desktop UI backend. If none is available, call `skill_test_start` with `backend: unavailable`, then `skill_test_finish` with `outcome: blocked` and `failureCategory: backend_unavailable`; report the skill to the user as `unverified`.
+- Reuse the backend selected before recording. If it disappeared or lost permission, report the changed capability and stop; do not silently switch to an unverified backend.
 - Call `skill_test_start` with `mode: safe` by default. Safe mode stops before the first likely external or irreversible action. Use `mode: live` only after the user explicitly confirms the listed risk and pass `liveConfirmed: true`.
 - Prefer a fresh task or isolated agent only when the host already supports and authorizes that isolation. Do not create another agent solely for evaluation when host policy or the user's scope does not allow it; run in the current context and set `contextIsolation: current`.
 - Execute the generated skill from its explicit path. Record a short sanitized observation for every evaluated step and the actual backend used, then call `skill_test_finish`.
@@ -191,13 +209,15 @@ FlowOnce 根据用户意图自动路由到对应流程：
 - On a safe-mode `failed` or `blocked` result during the current creation/refinement task, use the returned recommendation to refine the reviewed Workflow IR, regenerate the same skill, and start a retry with `previousRunID`. Retry automatically at most twice. Never auto-retry a live test or any run where an external side effect may already have happened; ask the user to inspect the target state first.
 - If the user only asked to test an existing skill, do not modify, regenerate, or install it after a failure without permission. Report the evidence and ask whether they want it refined.
 - Never include raw test input values, passwords, tokens, personal data, screenshots containing secrets, or private content in evaluation observations.
-- Install the final generated skill only when installation is part of the user's current creation request. Tell the user whether it is fully verified, checkpoint-verified, or unverified.
+- Install the final generated skill automatically with `skill_install` and the explicit current host, or `flowonce install <skill-directory> <host>` in CLI fallback mode. WorkBuddy may return one remaining upload action. Tell the user whether it is fully verified, checkpoint-verified, or unverified, and distinguish generation success from the changed-input replay Aha moment.
 
 ## Standalone Use
 
 - Keep the recorder core independent of Codex and MCP. When operating outside an MCP host, use `node scripts/record-replay.mjs help` from the installed product root for the standalone CLI.
 - Treat `scripts/event-stream-mcp.mjs` as a protocol adapter only; do not put recording, normalization, compilation, or skill-generation business logic in it.
 - Use `node scripts/record-replay.mjs host-config <host>` to print an absolute stdio MCP configuration and the generated-skill installation destination for Codex, CodeBuddy, Qoder, QoderWork, or WorkBuddy.
+- Use `node scripts/record-replay.mjs preflight "<application>" <kind> <backend...>` to classify replay readiness before recording when MCP is unavailable.
+- Use `node scripts/record-replay.mjs summarize <workflow.json>` for the distillation card and `journey-status` to inspect the local aggregate funnel when MCP is unavailable.
 - Use `test-start`, `test-finish`, and `test-status` for the standalone two-phase evaluation protocol. The CLI prepares and records the test; the current agent host still performs the actual workflow.
 - Treat the Codex plugin manifest and `agents/openai.yaml` as an optional host adapter. Do not make them requirements of the recorder, Workflow IR, MCP server, or default generated skill.
 
@@ -207,8 +227,9 @@ FlowOnce 根据用户意图自动路由到对应流程：
 
 | Problem | Solution |
 |---------|----------|
-| "MCP tools not found" after install | Completely quit and reopen the AI host (not just close the window). The MCP config is read at launch. |
-| "FlowOnce.app can't be opened" | The app is notarized by Apple. Right-click → Open, or go to System Settings → Privacy & Security and click "Open Anyway". |
+| "MCP tools not found" after install | Continue the first experience through the installed `flowonce` CLI. The MCP enhancement becomes available after the host is reopened later. |
+| "FlowOnce.app can't be opened" | Free preview builds may not be Apple-notarized. Let bootstrap verify checksum and code-signature integrity, then use the macOS app-specific exception in System Settings → Privacy & Security → **Open Anyway**. Never disable Gatekeeper or run `xattr`. |
+| "Open Anyway is missing" | Try opening **Install FlowOnce.app** once, then return to Privacy & Security within one hour. Organization-managed Macs may require IT approval. |
 | Permission prompt doesn't appear | Go to System Settings → Privacy & Security → Accessibility, remove FlowOnce if listed, then start a new recording. |
 | FlowOnce is already enabled but still asks for permission | Toggle FlowOnce off and back on in Accessibility settings, then restart the host. macOS caches stale authorization records. |
 
@@ -234,7 +255,7 @@ FlowOnce 根据用户意图自动路由到对应流程：
 ### 国内用户特别提示
 
 - **Skill 安装**：[SkillHub](https://skillhub.cn/skills/flowonce) 可一键安装控制器 Skill
-- **首次录制**：仍需安装 GitHub Release 中的 macOS 桌面引擎；安装完成后说“初始化 FlowOnce”统一自检
+- **首次录制**：控制 Skill 自动下载、校验并准备本地引擎；用户只需按 macOS 要求开启一次辅助功能权限
 - **升级**：重新运行安装器即可覆盖升级，技能文件不会丢失
 - **卸载**：删除 `~/Applications/FlowOnce.app` 和 `~/.codebuddy/skills/record-and-replay-local/`（或对应主机的技能目录）
 
