@@ -14,6 +14,12 @@ node "$ROOT/scripts/record-replay.mjs" generate \
   standalone-demo >/dev/null
 
 [ -f "$OUTPUT/standalone-demo/SKILL.md" ]
+CLI_HOME="$OUTPUT/cli-home"
+mkdir -p "$CLI_HOME/.codex/skills"
+HOME="$CLI_HOME" node "$ROOT/scripts/record-replay.mjs" install \
+  "$OUTPUT/standalone-demo" codex \
+  | grep -F '"installed": true' >/dev/null
+[ -f "$CLI_HOME/.codex/skills/standalone-demo/SKILL.md" ]
 printf '%s\n' '{"text":"different CLI test value"}' > "$OUTPUT/test-inputs.json"
 TEST_STARTED=$(FLOWONCE_EVALUATION_ROOT="$OUTPUT/evaluations" node "$ROOT/scripts/record-replay.mjs" \
   test-start "$OUTPUT/standalone-demo" "$OUTPUT/test-inputs.json" \

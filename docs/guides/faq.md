@@ -4,17 +4,15 @@
 
 ### Q: 安装后 AI 说找不到录制工具？
 
-确保已完成以下步骤：
-1. 双击 DMG 中的 **Install FlowOnce.app** 完成安装
-2. 在 **系统设置 → 隐私与安全性 → 辅助功能** 中添加并启用 `~/Applications/FlowOnce.app`
-3. **完全退出并重新打开** AI 主机（CodeBuddy / WorkBuddy / Qoder / QoderWork / Codex）
-4. 新建对话说“初始化 FlowOnce”，按自检给出的唯一“下一步”处理
+直接再次说“请用 FlowOnce 学习我的操作”。控制 Skill 会优先运行 bootstrap，自动准备缺失的本地引擎，并在当前对话中通过稳定 CLI 继续。只有 macOS 打开“辅助功能”设置时，需要您本人启用 FlowOnce。
 
 如果权限已开启但仍不工作，尝试**先关闭再重新开启**辅助功能开关，让 macOS 刷新授权记录。
 
 ### Q: macOS 提示"无法验证开发者"或"不能打开"？
 
-本地构建的 DMG 使用 ad-hoc 签名，仅限开发测试。正式分发需要 Apple Developer ID 签名和公证。请不要关闭 macOS 安全保护，向提供方索取已签名公证的正式版本。
+免费预览版使用 ad-hoc 签名，尚未经过 Apple 公证。FlowOnce 会先自动校验对应 Release 的 SHA-256 和代码签名完整性；校验通过后，首次安装需要您在 **系统设置 → 隐私与安全性** 中向下滚动，点击 FlowOnce 旁的 **仍要打开**，再回到对话说“继续初始化”。
+
+这是 macOS 提供的单个 App 安全例外，不会关闭系统整体保护。请不要执行 `xattr`、不要关闭 Gatekeeper，也不要从非官方地址下载安装包。“仍要打开”通常在尝试启动 App 后一小时内可用。
 
 ### Q: 支持 Windows 或 Linux 吗？
 
@@ -27,6 +25,18 @@
 ---
 
 ## 录制使用
+
+### Q: 为什么 FlowOnce 在录制前先检查回放能力？
+
+录制和回放由不同组件完成：FlowOnce 负责观察、整理并生成技能，当前 AI 宿主使用浏览器、连接器、CLI 或桌面控制能力执行技能。提前检查可以避免您完成一条长录制后才发现当前环境暂时不能复现。
+
+如果目标应用暂不可复现，FlowOnce 会保留目标并推荐一个当前环境能完成的短任务，让第一次体验先到达“换参数成功复现”的 Aha 时刻。
+
+### Q: FlowOnce 会收集使用数据吗？
+
+不会自动上传遥测。FlowOnce 只在本机保存一个隐私型体验漏斗，用于告诉您安装、录制、生成和换参数复现进行到了哪一步。
+
+该文件只包含阶段名称、成功/失败、耗时和机器可读错误码；不包含输入文字、应用内容、联系人、窗口标题、文件名或录制事件。您可以通过 `flowonce journey-status` 查看。
 
 ### Q: 录制时 AI 能看到我的屏幕内容吗？
 
@@ -49,12 +59,7 @@ FlowOnce 通过 Accessibility API 捕获**语义事件**（点击了什么按钮
 
 ### Q: AI 理解错了我的操作怎么办？
 
-AI 生成技能前会拿着草案找你确认，包括：
-- 哪些输入是每次会变的（参数化）
-- 做到什么状态算成功（验收标准）
-- 哪些误操作需要剔除
-
-**你点头之前，技能不会生成。** 如果草案有误，直接告诉 AI 哪里不对。
+FlowOnce 默认自动采用高置信度推断，只把会实质改变结果的低置信度问题集中问一次。如果摘要有误，直接告诉 AI 哪里不对；也可以说“完整审查”逐步确认。
 
 ### Q: 可以同时录制多个工作流吗？
 
@@ -68,11 +73,11 @@ AI 生成技能前会拿着草案找你确认，包括：
 
 | 主机 | 安装方式 |
 |------|----------|
-| CodeBuddy | 复制到 `~/.codebuddy/skills/<name>/` 或 UI 导入 |
+| CodeBuddy | FlowOnce 自动安装 |
 | WorkBuddy | Skills > Add Skill > Upload Skill（.zip 包） |
-| Qoder | 复制到 `~/.qoder/skills/<name>/` |
-| QoderWork | 复制到 `~/.qoderwork/skills/<name>/` 或 UI 安装 |
-| Codex | 设置 → MCP 中启用 `record-and-replay-local`，安装器自动注册 |
+| Qoder | FlowOnce 自动安装 |
+| QoderWork | FlowOnce 自动安装 |
+| Codex | FlowOnce 自动安装 |
 
 ### Q: 换了 AI 主机，技能需要重新录制吗？
 
@@ -108,10 +113,7 @@ AI 生成技能前会拿着草案找你确认，包括：
 
 ### Q: Codex 安装 FlowOnce 后找不到 MCP 工具？
 
-1. 运行安装器（重复安装不会产生重复配置）
-2. 完全退出 Codex 后重新打开
-3. 进入 Codex → **设置 → MCP**，确认 `record-and-replay-local` 已出现并处于启用状态
-4. 新建对话说“初始化 FlowOnce”；若仍失败，重新运行安装器并完整重启 Codex
+第一次体验可以通过安装后的本地 CLI 在当前对话继续，不需要为此重启。以后重新打开 Codex 时，进入 **设置 → MCP** 确认 `record-and-replay-local` 已启用；若仍未出现，再重新运行自动准备。
 
 ### Q: Codex 中录制和回放流程和其他主机一样吗？
 
@@ -125,7 +127,7 @@ AI 生成技能前会拿着草案找你确认，包括：
 
 ### Q: 如何升级 FlowOnce 到新版本？
 
-下载最新 DMG 安装包，双击 **Install FlowOnce.app** 即可覆盖安装。已录制的技能和配置文件不会被覆盖。升级后请完全退出并重新打开 AI 主机。
+更新 Skill 后再次使用 FlowOnce，bootstrap 会发现版本不一致并自动准备对应正式版本。已生成的技能不会被覆盖。也可以用最新 DMG 手动覆盖安装。
 
 ### Q: 如何卸载 FlowOnce？
 

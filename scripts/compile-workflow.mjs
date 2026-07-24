@@ -13,6 +13,7 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const normalized = JSON.parse(execFileSync(process.execPath, [join(root, "scripts", "normalize-recording.mjs"), eventsPath], { encoding: "utf8" }));
 const inputs = [];
 let inputIndex = 0;
+const usedInputNames = new Set();
 
 function timeDeltaMs(prevTimestamp, currentTimestamp) {
   if (!prevTimestamp || !currentTimestamp) return null;
@@ -32,6 +33,57 @@ function targetLabel(target = {}) {
   return parts.join(" ") || "UI element";
 }
 
+function uniqueInputName(base) {
+  let name = base;
+  let suffix = 2;
+  while (usedInputNames.has(name)) {
+    name = `${base}_${suffix}`;
+    suffix += 1;
+  }
+  usedInputNames.add(name);
+  return name;
+}
+
+function inferInputName(action, index) {
+  if (action.redacted) {
+    const context = JSON.stringify({
+      identifier: action.target?.identifier,
+      title: action.target?.title
+    }).toLowerCase();
+    if (/(password|passwd|passcode|密码|口令)/u.test(context)) return uniqueInputName("password");
+    if (/(token|api.?key|access.?key|令牌|密钥)/u.test(context)) return uniqueInputName("api_token");
+    return uniqueInputName(`sensitive_input_${index}`);
+  }
+  const targetContext = [
+    action.target?.identifier,
+    action.target?.title,
+    action.target?.role
+  ].filter(Boolean).join(" ").toLowerCase();
+  const rules = [
+    ["search_term", /(search|query|keyword|搜索|关键词|查询)/u],
+    ["recipient", /(recipient|contact|member|group|chat|conversation|收件人|联系人|群聊|会话)/u],
+    ["message", /(message|composer|chat.?input|消息|正文|发送内容)/u],
+    ["email_address", /(e-?mail|邮箱|邮件地址)/u],
+    ["subject", /(subject|主题|标题)/u],
+    ["file_path", /(\b(?:file|folder|path|filename)\b|文件|目录|路径)/u],
+    ["url", /(\b(?:url|website)\b|address.?bar|网址|链接|地址栏)/u],
+    ["date", /(\bdate\b|日期)/u],
+    ["time", /(\btime\b|时间)/u],
+    ["amount", /(\b(?:amount|price|money)\b|金额|价格)/u],
+    ["name", /(\bname\b|姓名|名称)/u]
+  ];
+  for (const [name, pattern] of rules) {
+    if (pattern.test(targetContext)) return uniqueInputName(name);
+  }
+  const applicationContext = `${action.application?.name ?? ""} ${action.application?.bundleIdentifier ?? ""}`.toLowerCase();
+  if (/textedit|文本编辑/u.test(applicationContext) && /AXTextArea/iu.test(action.target?.role ?? "")) {
+    return uniqueInputName("text");
+  }
+  if (/(wecom|wechat|slack|teams|messages|企业微信|微信|飞书|钉钉)/u.test(applicationContext)
+    && /AXTextArea|AXTextField/iu.test(action.target?.role ?? "")) return uniqueInputName("message");
+  return uniqueInputName(`text_input_${index}`);
+}
+
 function verifyFor(action) {
   const label = targetLabel(action.target);
   switch (action.type) {
@@ -46,10 +98,10 @@ function verifyFor(action) {
         observation: `Confirm that submitting via ${label} completed (next screen loaded, dialog dismissed, or form processed).`
       };
     case "input_text": {
-      const value = action.redacted ? "[redacted]" : (action.value ? `"${action.value}"` : "the entered text");
       return {
         required: true,
-        observation: `Verify that ${label} contains ${value}. Re-focus and retype if the value was not set.`
+        kind: "value_equals",
+        observation: `Read the complete semantic value of ${label} and require an exact match with the requested input. Re-focus and retype if it differs.`
       };
     }
     case "shortcut": {
@@ -124,16 +176,22 @@ const steps = normalized.actions.map((action, index) => {
 
   if (action.type === "input_text") {
     inputIndex += 1;
-    const name = action.redacted ? `sensitive_input_${inputIndex}` : `text_input_${inputIndex}`;
+    const name = inferInputName(action, inputIndex);
     inputs.push({
       name,
       type: "string",
       required: true,
       sensitive: Boolean(action.redacted),
       demonstratedValue: action.redacted ? undefined : action.value,
-      inference: "candidate"
+      inference: "candidate",
+      semanticRole: name.replace(/_\d+$/u, ""),
+      confidence: name.startsWith("text_input_") || name.startsWith("sensitive_input_") ? "low" : "high"
     });
     step.value = `{{${name}}}`;
+    step.verify = {
+      ...step.verify,
+      expected: step.value
+    };
   }
   if (action.type === "shortcut") {
     step.key = action.key;

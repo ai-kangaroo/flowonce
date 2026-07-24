@@ -15,10 +15,11 @@ static void ShowFailure(NSString *message) {
     [alert runModal];
 }
 
-int main(void) {
+int main(int argc, const char *argv[]) {
     @autoreleasepool {
         NSDictionary<NSString *, NSString *> *environment = NSProcessInfo.processInfo.environment;
-        BOOL noUI = [environment[@"RECORD_REPLAY_INSTALL_NO_UI"] isEqualToString:@"1"];
+        BOOL bootstrap = argc >= 2 && strcmp(argv[1], "--bootstrap") == 0;
+        BOOL noUI = bootstrap || [environment[@"RECORD_REPLAY_INSTALL_NO_UI"] isEqualToString:@"1"];
         if (!noUI) {
             [NSApplication sharedApplication];
             [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];

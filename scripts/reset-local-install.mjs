@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const confirmation = "--yes-delete-without-backup";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const home = resolve(process.env.FLOWONCE_RESET_HOME ?? homedir());
+const release = JSON.parse(await readFile(join(root, "release.json"), "utf8"));
 
 if (!process.argv.slice(2).includes(confirmation)) {
   process.stderr.write(`This permanently deletes the installed FlowOnce app, engine, controller skills, temporary state, host MCP entries, and Accessibility permission.\nRe-run with ${confirmation} to continue.\n`);
@@ -117,6 +118,6 @@ const installed = spawnSync(join(root, "scripts", "install-local.sh"), ["codex"]
 });
 process.stdout.write(installed.stdout);
 process.stderr.write(installed.stderr);
-if (installed.status !== 0) throw new Error("Fresh FlowOnce 0.3.3 installation failed.");
+if (installed.status !== 0) throw new Error(`Fresh FlowOnce ${release.version} installation failed.`);
 
 process.stdout.write("FlowOnce was reset without backups and freshly installed for Codex.\n");

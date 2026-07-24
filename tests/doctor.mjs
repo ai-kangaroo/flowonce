@@ -50,7 +50,7 @@ assert(formatDoctorReport(ready).includes("可以开始录制"), "doctor summary
 await writeFile(skill, "---\nname: record-and-replay-local\nmetadata:\n  version: 0.3.2\n---\n");
 const stale = await readyService.inspect({ host: "codex" });
 assert(!stale.ready && stale.checks.some(item => item.id === "skill" && item.status === "fail"), "doctor missed a stale host skill");
-assert(stale.nextAction.includes("版本一致"), "doctor did not provide a single recovery action");
+assert(stale.canAutoFix && stale.automaticAction?.type === "run_bootstrap", "doctor did not provide an automatic recovery action");
 
 const aliasSkill = join(home, ".codex", "skills", "flowonce", "SKILL.md");
 await mkdir(join(home, ".codex", "skills", "flowonce"), { recursive: true });
@@ -74,5 +74,6 @@ await writeFile(skill, "---\nname: record-and-replay-local\nmetadata:\n  version
 const permission = await permissionService.inspect({ host: "codex" });
 assert(!permission.ready && permission.checks.some(item => item.id === "accessibility" && item.status === "fail"), "doctor missed Accessibility permission");
 assert(permission.nextAction.includes("辅助功能"), "doctor did not explain Accessibility recovery");
+assert(permission.requiredUserAction?.type === "grant_accessibility" && !permission.canAutoFix, "doctor did not isolate the one required user action");
 
 process.stdout.write("FlowOnce doctor contract OK\n");

@@ -10,9 +10,15 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const release = JSON.parse(await readFile(join(root, "release.json"), "utf8"));
 const evaluationRoot = await mkdtemp(join(tmpdir(), "record-replay-mcp-evaluations."));
 const jobRoot = await mkdtemp(join(tmpdir(), "record-replay-mcp-jobs."));
+const journeyRoot = await mkdtemp(join(tmpdir(), "record-replay-mcp-journey."));
 const child = spawn(process.execPath, [join(root, "scripts", "event-stream-mcp.mjs")], {
   cwd: root,
-  env: { ...process.env, FLOWONCE_EVALUATION_ROOT: evaluationRoot, FLOWONCE_JOB_ROOT: jobRoot },
+  env: {
+    ...process.env,
+    FLOWONCE_EVALUATION_ROOT: evaluationRoot,
+    FLOWONCE_JOB_ROOT: jobRoot,
+    FLOWONCE_JOURNEY_PATH: join(journeyRoot, "journey.json")
+  },
   stdio: ["pipe", "pipe", "inherit"]
 });
 const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
@@ -48,8 +54,10 @@ try {
     "recording_normalize_start",
     "flowonce_doctor",
     "flowonce_job_status",
-    "skill_generate", "skill_generate_start", "skill_test_finish", "skill_test_start", "skill_test_status",
-    "workflow_compile", "workflow_compile_start", "workflow_validate"
+    "journey_status",
+    "replay_preflight",
+    "skill_generate", "skill_generate_start", "skill_install", "skill_test_finish", "skill_test_start", "skill_test_status",
+    "workflow_compile", "workflow_compile_start", "workflow_summarize", "workflow_validate"
   ].sort()), `unexpected tools: ${names.join(", ")}`);
   for (const tool of listed.tools) {
     assert(tool.inputSchema.additionalProperties === false, `${tool.name} schema is not closed`);
@@ -59,9 +67,25 @@ try {
   const prompt = await request("prompts/get", { name: "record_workflow", arguments: { goal: "Prepare a report" } });
   const promptText = prompt.messages[0].content.text;
   assert(promptText.includes("target=portable"), "prompt does not prefer portable generation");
+  assert(promptText.includes("replay_preflight"), "prompt does not preflight replay before recording");
   assert(!promptText.includes("Codex") && !promptText.includes("ChatGPT"), "prompt is vendor-coupled");
 
+  const preflight = await request("tools/call", {
+    name: "replay_preflight",
+    arguments: {
+      application: "Google Chrome",
+      availableBackends: ["browser-control"],
+      firstUse: true
+    }
+  });
+  const preflightValue = JSON.parse(preflight.content[0].text);
+  assert(preflightValue.canPromiseReplay, "MCP replay preflight rejected a compatible backend");
+  assert(preflightValue.recommendedDemo?.id === "browser-changed-search", "MCP did not return the first-use demo");
+
   const workflow = JSON.parse(await readFile(join(root, "tests", "fixtures", "reviewed-workflow.json"), "utf8"));
+  const summarized = await request("tools/call", { name: "workflow_summarize", arguments: { workflow } });
+  const summarizedValue = JSON.parse(summarized.content[0].text);
+  assert(summarizedValue.title.includes(workflow.goal), "MCP workflow summary is missing the goal");
   const validation = await request("tools/call", { name: "workflow_validate", arguments: { workflow, reviewed: true } });
   const validationValue = JSON.parse(validation.content[0].text);
   assert(validationValue.valid && validationValue.errors.length === 0, "reviewed workflow did not validate through MCP");

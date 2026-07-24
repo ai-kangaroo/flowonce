@@ -281,7 +281,7 @@ async function migrateLegacyRecorder(home, installRoot) {
   return { backupPath };
 }
 
-async function install(options) {
+export async function installDistribution(options) {
   const manifestPath = join(options.payload, "manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   if (manifest.schemaVersion !== 1 || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(manifest.version ?? "")) {
@@ -334,6 +334,16 @@ async function install(options) {
     command: join(currentLink, "runtime", "bin", "node"),
     args: [join(currentLink, "scripts", "event-stream-mcp.mjs")]
   };
+  const commandRoot = join(installRoot, "bin");
+  const cliPath = join(commandRoot, "flowonce");
+  await mkdir(commandRoot, { recursive: true });
+  await writeFile(cliPath, `#!/bin/sh
+set -eu
+COMMAND_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+INSTALL_ROOT=$(CDPATH= cd -- "$COMMAND_ROOT/.." && pwd)
+exec "$INSTALL_ROOT/current/runtime/bin/node" "$INSTALL_ROOT/current/scripts/record-replay.mjs" "$@"
+`, { mode: 0o755 });
+  await chmod(cliPath, 0o755);
   const configured = {};
   const warnings = [];
   if (legacyRecorder.warning) warnings.push(legacyRecorder.warning);
@@ -394,6 +404,7 @@ async function install(options) {
     version: manifest.version,
     architecture: manifest.architecture,
     installRoot,
+    cliPath,
     recorderApp: recorderDestination,
     ...(recorderBackup ? { recorderBackup } : {}),
     ...(legacyRecorder.backupPath ? { legacyRecorderBackup: legacyRecorder.backupPath } : {}),
@@ -407,7 +418,7 @@ async function install(options) {
 
 const options = parseArguments(process.argv.slice(2));
 try {
-  const result = await install(options);
+  const result = await installDistribution(options);
   if (options.json) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else {
     process.stdout.write(`Installed ${result.product} ${result.version}.\n`);

@@ -6,9 +6,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 export function createRecorderService(options = {}) {
-  const root = options.root;
   const installedCollectorApp = join(process.env.HOME ?? "", "Applications", "FlowOnce.app");
-  const bundledCollectorApp = join(root, "bin", "FlowOnce.app");
   const collectorApp = options.collectorApp ?? process.env.RECORD_REPLAY_APP_PATH ?? installedCollectorApp;
   const collectorExecutable = join(collectorApp, "Contents", "MacOS", "RecordAndReplayLocal");
   const stateRoot = options.stateRoot ?? process.env.RECORD_REPLAY_STATE_ROOT ?? join(tmpdir(), "record-and-replay-local");
@@ -63,10 +61,17 @@ export function createRecorderService(options = {}) {
     const current = await currentSession();
     if (current.isRecording) return publicStatus(current.session, true);
     if (!(await exists(collectorExecutable))) {
-      const hint = await exists(join(bundledCollectorApp, "Contents", "MacOS", "RecordAndReplayLocal"))
-        ? "Run scripts/install-recorder.sh once."
-        : "Run scripts/build.sh and scripts/install-recorder.sh once.";
-      throw new Error(`Missing installed native recorder at ${collectorApp}. ${hint}`);
+      return {
+        isRecording: false,
+        maxDurationSeconds,
+        setupRequired: true,
+        reason: "local_engine_missing",
+        canAutoFix: true,
+        automaticAction: {
+          type: "run_bootstrap",
+          label: "自动准备 FlowOnce"
+        }
+      };
     }
 
     const id = randomUUID().toUpperCase();

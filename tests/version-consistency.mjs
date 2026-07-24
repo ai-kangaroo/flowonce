@@ -30,7 +30,7 @@ assert(builtVersion?.[1] === expected, `built FlowOnce.app version ${builtVersio
 
 const skillUI = await readFile(join(root, "skills", "record-and-replay-local", "agents", "openai.yaml"), "utf8");
 assert(skillUI.includes('display_name: "FlowOnce"'), "skill display name is not FlowOnce");
-assert(skillUI.includes('value: "record-and-replay-local"'), "skill MCP dependency does not use the compatibility ID");
+assert(!skillUI.includes("\ndependencies:"), "controller skill must remain callable before the local MCP engine is installed");
 for (const relativePath of ["README.md", "docs/guides/user-guide.md"]) {
   const document = await readFile(join(root, relativePath), "utf8");
   assert(document.includes("FlowOnce"), `${relativePath} is missing the FlowOnce brand`);

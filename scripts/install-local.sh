@@ -27,17 +27,23 @@ for script in \
   generate-skill.mjs \
   host-config.mjs \
   install-distribution.mjs \
+  journey-service.mjs \
   normalize-recording.mjs \
+  replay-preflight.mjs \
   record-replay.mjs \
   recorder-service.mjs \
+  skill-install-service.mjs \
   skill-test-service.mjs \
   validate-workflow.mjs \
-  workflow-validation.mjs
+  workflow-validation.mjs \
+  workflow-summary.mjs
 do
   cp "$ROOT/scripts/$script" "$PRODUCT/scripts/$script"
 done
 cp "$ROOT/skills/record-and-replay-local/SKILL.md" "$SKILL/SKILL.md"
 cp -R "$ROOT/skills/record-and-replay-local/references" "$SKILL/references"
+cp -R "$ROOT/skills/record-and-replay-local/scripts" "$SKILL/scripts"
+chmod 755 "$SKILL/scripts/flowonce-bootstrap.sh"
 cp "$NODE_BINARY" "$PAYLOAD/runtime/bin/node"
 chmod 755 "$PAYLOAD/runtime/bin/node"
 ditto -c -k --sequesterRsrc --keepParent "$SKILL" "$PAYLOAD/skill-packages/FlowOnce-Controller.zip"

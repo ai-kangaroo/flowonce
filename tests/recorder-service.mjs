@@ -8,6 +8,15 @@ const root = await mkdtemp(join(tmpdir(), "record-replay-service."));
 const stateRoot = join(root, "state");
 const collectorApp = join(root, "Fake Collector.app");
 const executable = join(collectorApp, "Contents", "MacOS", "RecordAndReplayLocal");
+const missingService = createRecorderService({
+  stateRoot: join(root, "missing-state"),
+  collectorApp: join(root, "Missing.app"),
+  useLaunchServices: false
+});
+const missing = await missingService.start();
+if (!missing.setupRequired || !missing.canAutoFix || missing.automaticAction?.type !== "run_bootstrap") {
+  throw new Error("missing recorder did not route to automatic bootstrap");
+}
 await mkdir(join(collectorApp, "Contents", "MacOS"), { recursive: true });
 await writeFile(executable, `#!/usr/bin/env node
 import { access, appendFile, mkdir, rm, writeFile } from "node:fs/promises";

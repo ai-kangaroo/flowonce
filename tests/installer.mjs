@@ -85,6 +85,7 @@ const workBuddyConfig = JSON.parse(await readFile(join(home, ".workbuddy", "mcp.
 assert(workBuddyConfig.mcpServers["record-and-replay-local"], "WorkBuddy MCP server missing");
 assert(await readFile(join(home, ".codebuddy", "skills", "record-and-replay-local", "SKILL.md"), "utf8"), "CodeBuddy skill missing");
 assert(await readFile(join(home, ".codebuddy", "skills", "record-and-replay-local", "references", "faq-deep.md"), "utf8"), "CodeBuddy skill references missing");
+assert(await readFile(first.cliPath, "utf8"), "stable first-session CLI missing");
 assert(await readFile(join(home, ".qoder", "skills", "record-and-replay-local", "SKILL.md"), "utf8"), "Qoder skill missing");
 assert(await readFile(join(home, "Library", "Application Support", "FlowOnce", "share", "FlowOnce-Controller.zip"), "utf8") === "test-package", "WorkBuddy package missing");
 assert((await readFile(join(home, "Applications", "FlowOnce.app", "Contents", "Info.plist"), "utf8")).includes("local.record-and-replay"), "recorder app missing or wrong identity");

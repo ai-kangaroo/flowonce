@@ -296,6 +296,27 @@ int main(int argc, const char *argv[]) {
             fputc('\n', stdout);
             return 0;
         }
+        if (argc >= 2 && strcmp(argv[1], "--request-accessibility") == 0) {
+            [NSApplication sharedApplication];
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+            [NSApp finishLaunching];
+            [NSApp activateIgnoringOtherApps:YES];
+            NSDictionary *trustOptions = @{ (__bridge NSString *)kAXTrustedCheckOptionPrompt: @YES };
+            BOOL trusted = AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)trustOptions);
+            if (!trusted) OpenAccessibilityPermissionSetup();
+            NSDictionary *result = @{
+                @"accessibilityTrusted": @(trusted),
+                @"permissionRequired": @(!trusted)
+            };
+            NSData *data = [NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingSortedKeys error:nil];
+            if (argc >= 3) {
+                NSString *resultPath = [NSString stringWithUTF8String:argv[2]];
+                [data writeToFile:resultPath atomically:YES];
+            }
+            fwrite(data.bytes, 1, data.length, stdout);
+            fputc('\n', stdout);
+            return 0;
+        }
         BOOL headless = [[NSProcessInfo.processInfo.environment objectForKey:@"RECORD_REPLAY_HEADLESS"] isEqualToString:@"1"];
         BOOL forcePermissionRequired = [[NSProcessInfo.processInfo.environment objectForKey:@"RECORD_REPLAY_FORCE_ACCESSIBILITY_UNTRUSTED"] isEqualToString:@"1"];
         if (argc >= 3) {

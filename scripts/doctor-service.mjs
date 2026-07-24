@@ -47,6 +47,58 @@ function check(id, status, message, details = {}) {
   return { id, status, message, ...details };
 }
 
+function remediationFor(checks, { recorderApp, sourceVersion }) {
+  const failures = checks.filter(item => item.status === "fail");
+  if (failures.some(item => ["recorder", "runtime", "skill"].includes(item.id))) {
+    return {
+      issueCode: "local_engine_missing_or_stale",
+      canAutoFix: true,
+      action: {
+        type: "run_bootstrap",
+        label: "自动准备 FlowOnce",
+        requiresUserInteraction: false
+      },
+      message: `自动安装或更新 FlowOnce ${sourceVersion ?? "当前版本"}，并使本地引擎与控制 Skill 保持一致。`
+    };
+  }
+  if (failures.some(item => item.id === "accessibility")) {
+    return {
+      issueCode: "accessibility_permission_required",
+      canAutoFix: false,
+      action: {
+        type: "grant_accessibility",
+        label: "允许 FlowOnce 观察演示",
+        appPath: recorderApp,
+        settingsURL: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+        requiresUserInteraction: true
+      },
+      message: "打开 macOS“辅助功能”设置并启用 FlowOnce。完成后 FlowOnce 会自动重新检查。"
+    };
+  }
+  if (failures.some(item => item.id === "mcp")) {
+    return {
+      issueCode: "host_connection_restart_required",
+      canAutoFix: false,
+      action: {
+        type: "restart_host",
+        label: "重新打开 AI 助手",
+        requiresUserInteraction: true
+      },
+      message: "本地引擎已经就绪；重新打开 AI 助手即可加载 FlowOnce 工具。首次体验也可以直接使用本地 CLI，无需等待 MCP。"
+    };
+  }
+  return {
+    issueCode: null,
+    canAutoFix: false,
+    action: {
+      type: "start_recording",
+      label: "开始第一次演示",
+      requiresUserInteraction: true
+    },
+    message: "说“我准备好了，开始录制”。"
+  };
+}
+
 function findCodexExecutable(home) {
   const candidates = [
     process.env.RECORD_REPLAY_CODEX_BIN,
@@ -265,14 +317,7 @@ export function createDoctorService(options = {}) {
 
       const failures = checks.filter(item => item.status === "fail");
       const ready = failures.length === 0;
-      let nextAction = "说“我准备好了，开始录制”。";
-      if (failures.some(item => ["recorder", "runtime", "skill"].includes(item.id))) {
-        nextAction = `重新运行 FlowOnce ${sourceVersion ?? "当前版本"} 安装器，使录制器、引擎和 Skill 版本一致。`;
-      } else if (failures.some(item => item.id === "accessibility")) {
-        nextAction = `在“系统设置 → 隐私与安全性 → 辅助功能”中启用 ${recorderApp}，然后重新运行自检。`;
-      } else if (failures.some(item => item.id === "mcp")) {
-        nextAction = "重新运行安装器并完全退出后重启 AI 宿主，再运行自检。";
-      }
+      const remediation = remediationFor(checks, { recorderApp, sourceVersion });
 
       return {
         ready,
@@ -284,7 +329,11 @@ export function createDoctorService(options = {}) {
         skillVersion,
         skillInstallations,
         checks,
-        nextAction
+        issueCode: remediation.issueCode,
+        canAutoFix: remediation.canAutoFix,
+        requiredUserAction: remediation.action.requiresUserInteraction ? remediation.action : null,
+        automaticAction: remediation.canAutoFix ? remediation.action : null,
+        nextAction: remediation.message
       };
     }
   };

@@ -53,11 +53,19 @@ if (normalized.actions[8]?.value !== "AX direct value" || normalized.actions[8]?
 
 const workflow = JSON.parse(execFileSync(process.execPath, [join(root, "scripts", "compile-workflow.mjs"), path], { encoding: "utf8" }));
 if (workflow.inputs[0]?.demonstratedValue !== "你好") throw new Error("compiled input lost the demonstrated value");
-if (workflow.steps[0]?.value !== "{{text_input_1}}") throw new Error("compiled input placeholder is invalid");
+if (workflow.steps[0]?.value !== "{{search_term}}") throw new Error("compiled semantic input placeholder is invalid");
+if (workflow.inputs[0]?.semanticRole !== "search_term" || workflow.inputs[0]?.confidence !== "high") {
+  throw new Error("compiled input did not infer search semantics");
+}
+if (workflow.steps[0]?.verify?.kind !== "value_equals" || workflow.steps[0]?.verify?.expected !== "{{search_term}}") {
+  throw new Error("compiled input did not produce a concrete equality assertion");
+}
 if (workflow.steps[0]?.window?.title !== "Example Window") throw new Error("compiled workflow lost window context");
 if (workflow.steps[2]?.key !== "super+c" || workflow.steps[3]?.deltaY !== -20) throw new Error("compiled workflow lost action details");
 if (workflow.steps[4]?.action !== "drag" || workflow.steps[4]?.from?.y !== 20) throw new Error("compiled workflow lost drag details");
-if (!workflow.inputs[1]?.sensitive || workflow.inputs[1]?.demonstratedValue !== undefined) throw new Error("compiled workflow leaked sensitive input");
+if (!workflow.inputs[1]?.sensitive || workflow.inputs[1]?.demonstratedValue !== undefined || workflow.inputs[1]?.name !== "password") {
+  throw new Error("compiled workflow did not safely infer the password input");
+}
 if (workflow.inputs[2]?.demonstratedValue !== "pasted text") throw new Error("compiled workflow lost pasted input");
 if (workflow.inputs[3]?.demonstratedValue !== "AX direct value") throw new Error("compiled workflow lost direct Accessibility input");
 const unsafeReviewed = {
@@ -70,6 +78,25 @@ const unsafeReviewed = {
 };
 if (!validateWorkflow(unsafeReviewed, { requireReviewed: true }).some(error => error.includes("must not persist"))) {
   throw new Error("workflow validation accepted a persisted sensitive value");
+}
+const messagePath = join(dir, "message-events.jsonl");
+const messagingApp = { name: "WeCom", bundleIdentifier: "com.tencent.WeWorkMac" };
+await writeFile(messagePath, [
+  { kind: "session.started", timestamp: "2026-01-01T00:00:00.000Z" },
+  { kind: "window.changed", timestamp: "2026-01-01T00:00:00.100Z", app: messagingApp, window: { title: "Project Chat" } },
+  {
+    kind: "keyboard.text_input",
+    timestamp: "2026-01-01T00:00:00.200Z",
+    app: messagingApp,
+    target: { role: "AXTextArea", identifier: "composer" },
+    keyboard: { text: "hello" }
+  },
+  { kind: "keyboard.submit", timestamp: "2026-01-01T00:00:00.300Z", app: messagingApp, target: { role: "AXTextArea", identifier: "composer" } },
+  { kind: "session.ended", timestamp: "2026-01-01T00:00:00.400Z", endReason: "recording_controls_stopped" }
+].map(event => JSON.stringify(event)).join("\n") + "\n");
+const messageWorkflow = JSON.parse(execFileSync(process.execPath, [join(root, "scripts", "compile-workflow.mjs"), messagePath], { encoding: "utf8" }));
+if (messageWorkflow.inputs[0]?.name !== "message") {
+  throw new Error("messaging composer was not inferred as message");
 }
 const untrustedPath = join(dir, "untrusted-events.jsonl");
 await writeFile(untrustedPath, `${JSON.stringify({ kind: "permissions.checked", accessibilityTrusted: false })}\n${JSON.stringify({ kind: "mouse.click", mouse: { x: 1, y: 2 } })}\n`);

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add replay capability preflight before recording, with deterministic compatibility classification
+- Add safe first-use demos selected from actually available browser, desktop, connector, or CLI backends
+- Add a release synchronization gate that rejects stale delivered Skills or incomplete dual-architecture assets
+- Add conservative semantic input naming and exact value assertions for recorded text
+- Add a beginner-facing distillation summary card to every generated skill
+- Add local-only aggregate Aha funnel metrics without recorded content or automatic upload
+
+## [0.4.0] - 2026-07-24
+
+### Added
 - Add the host-neutral `skill_test_start`, `skill_test_finish`, and `skill_test_status` evaluation protocol
 - Default post-generation evaluation to a safe checkpoint before likely external or irreversible actions
 - Persist sanitized local test reports without storing raw test input values
@@ -16,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `flowonce_doctor` and `record-replay.mjs doctor` for one-step local readiness checks
 - Add a one-command local source installer for development validation
 - Add asynchronous, idempotent MCP jobs for recording normalization, Workflow IR compilation, and skill generation
+- Add a Skill-first bootstrap that selects the Mac architecture, verifies the official release, prepares the local engine, and continues the first session through a stable CLI
+- Add automatic installation for FlowOnce-generated skills on Codex, CodeBuddy, Qoder, and QoderWork
+- Add a public-release gate that verifies both Mac architectures, checksums, Developer ID, notarization, Gatekeeper, and self-contained payloads
 
 ### Changed
 - Require the FlowOnce skill workflow to test generated skills with different inputs before calling them fully verified
@@ -24,12 +37,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make first-run documentation distinguish the controller Skill from the required native recorder
 - Make generated skills reuse an already-correct app state, verify complete Unicode input, trigger real search updates, and re-locate dynamic UI elements
 - Keep safe message tests running through complete draft preparation and stop only before the actual submit action
+- Define first-use success as a changed-input replay, not merely a saved recording or generated folder
+- Replace full draft review by default with one consolidated low-confidence clarification
+- Keep the controller Skill callable before MCP is installed, and reserve user intervention for macOS permission or other unavoidable host actions
+- Require Developer ID signing and Apple notarization for public release builds
 
 ### Fixed
 - Package referenced Skill documentation with the native installer
 - Detect mismatched App, engine, Skill versions, missing permissions, and conflicting duplicate Skill installs before recording
 - Normalize common evaluation failure-category aliases instead of rejecting the entire test report
 - Increase MCP child-process output capacity for large real-world recordings
+- Return a structured automatic bootstrap action instead of a raw missing-recorder exception
 ## [0.3.3] - 2026-07-23
 
 ### Added

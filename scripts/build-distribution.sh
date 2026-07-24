@@ -21,6 +21,7 @@ DMG_PATH="$OUTPUT_PARENT/$RELEASE_BASENAME.dmg"
 ZIP_PATH="$OUTPUT_PARENT/$RELEASE_BASENAME.zip"
 CHECKSUM_PATH="$OUTPUT_PARENT/$RELEASE_BASENAME.sha256"
 SIGN_IDENTITY=${RECORD_REPLAY_SIGN_IDENTITY:--}
+PUBLIC_RELEASE=${FLOWONCE_PUBLIC_RELEASE:-0}
 
 if [ ! -x "$NODE_BINARY" ]; then
   echo "Node runtime is not executable: $NODE_BINARY" >&2
@@ -32,6 +33,10 @@ if [ ! -f "$NODE_LICENSE" ]; then
 fi
 if [ -n "${RECORD_REPLAY_NOTARY_PROFILE:-}" ] && [ "$SIGN_IDENTITY" = "-" ]; then
   echo "RECORD_REPLAY_NOTARY_PROFILE requires RECORD_REPLAY_SIGN_IDENTITY" >&2
+  exit 1
+fi
+if [ "$PUBLIC_RELEASE" = "1" ] && { [ "$SIGN_IDENTITY" = "-" ] || [ -z "${RECORD_REPLAY_NOTARY_PROFILE:-}" ]; }; then
+  echo "Public FlowOnce releases require Developer ID signing and Apple notarization" >&2
   exit 1
 fi
 LATEST_DMG="$OUTPUT_PARENT/FlowOnce-macOS-$PACKAGE_ARCHITECTURE.dmg"
@@ -70,17 +75,24 @@ for script in \
   generate-skill.mjs \
   host-config.mjs \
   install-distribution.mjs \
+  journey-service.mjs \
   normalize-recording.mjs \
+  replay-preflight.mjs \
   record-replay.mjs \
   recorder-service.mjs \
+  skill-install-service.mjs \
   skill-test-service.mjs \
   validate-workflow.mjs \
-  workflow-validation.mjs
+  verify-release-readiness.mjs \
+  workflow-validation.mjs \
+  workflow-summary.mjs
 do
   cp "$ROOT/scripts/$script" "$PRODUCT/scripts/$script"
 done
 cp "$ROOT/skills/record-and-replay-local/SKILL.md" "$PRODUCT/skills/record-and-replay-local/SKILL.md"
 cp -R "$ROOT/skills/record-and-replay-local/references" "$PRODUCT/skills/record-and-replay-local/references"
+cp -R "$ROOT/skills/record-and-replay-local/scripts" "$PRODUCT/skills/record-and-replay-local/scripts"
+chmod 755 "$PRODUCT/skills/record-and-replay-local/scripts/flowonce-bootstrap.sh"
 cp "$NODE_BINARY" "$PAYLOAD/runtime/bin/node"
 chmod 755 "$PAYLOAD/runtime/bin/node"
 cp "$NODE_LICENSE" "$PAYLOAD/licenses/node/LICENSE"
@@ -97,20 +109,26 @@ CLANG_MODULE_CACHE_PATH="$ROOT/.build/module-cache" clang \
   "$ROOT/scripts/macos-installer.m" \
   -o "$INSTALLER_APP/Contents/MacOS/RecordAndReplayInstaller"
 sed "s/__FLOWONCE_VERSION__/$VERSION/g" "$ROOT/scripts/Installer-Info.plist" > "$INSTALLER_APP/Contents/Info.plist"
+
+if [ "$SIGN_IDENTITY" = "-" ]; then
+  # Sign nested code before embedding it in the outer installer bundle.
+  codesign --force --sign - "$PAYLOAD/runtime/bin/node"
+  codesign --force --deep --sign - \
+    --requirements '=designated => identifier "local.record-and-replay"' \
+    "$PAYLOAD/product/bin/FlowOnce.app"
+else
+  codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp \
+    "$PAYLOAD/runtime/bin/node"
+  codesign --force --deep --sign "$SIGN_IDENTITY" --options runtime --timestamp \
+    "$PAYLOAD/product/bin/FlowOnce.app"
+fi
+
 mkdir -p "$INSTALLER_APP/Contents/Resources/payload"
 ditto "$PAYLOAD" "$INSTALLER_APP/Contents/Resources/payload"
 
 if [ "$SIGN_IDENTITY" = "-" ]; then
-  codesign --force --sign - "$INSTALLER_APP/Contents/Resources/payload/runtime/bin/node"
-  codesign --force --deep --sign - \
-    --requirements '=designated => identifier "local.record-and-replay"' \
-    "$INSTALLER_APP/Contents/Resources/payload/product/bin/FlowOnce.app"
   codesign --force --deep --sign - "$INSTALLER_APP"
 else
-  codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp \
-    "$INSTALLER_APP/Contents/Resources/payload/runtime/bin/node"
-  codesign --force --deep --sign "$SIGN_IDENTITY" --options runtime --timestamp \
-    "$INSTALLER_APP/Contents/Resources/payload/product/bin/FlowOnce.app"
   codesign --force --deep --sign "$SIGN_IDENTITY" --options runtime --timestamp "$INSTALLER_APP"
 fi
 codesign --verify --deep --strict "$INSTALLER_APP"

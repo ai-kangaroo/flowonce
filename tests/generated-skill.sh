@@ -21,6 +21,9 @@ grep -F 'During a FlowOnce test run, report the actual execution backend' "$SKIL
 grep -F 'Never submit truncated Chinese' "$SKILL" >/dev/null
 grep -F 'If direct value assignment does not trigger results' "$SKILL" >/dev/null
 grep -F 'If the required destination or conversation is already open' "$SKILL" >/dev/null
+[ -f "$OUTPUT/demo-composer-skill/references/summary.json" ]
+grep -F '"title": "我学会了：Enter provided text in a TextEdit document"' \
+  "$OUTPUT/demo-composer-skill/references/summary.json" >/dev/null
 if [ -e "$OUTPUT/demo-composer-skill/agents/openai.yaml" ]; then
   echo "Portable skill unexpectedly contains Codex metadata" >&2
   exit 1

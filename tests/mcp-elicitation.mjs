@@ -15,7 +15,8 @@ const child = spawn(process.execPath, [join(root, "scripts", "event-stream-mcp.m
     ...process.env,
     RECORD_REPLAY_STATE_ROOT: stateRoot,
     RECORD_REPLAY_APP_PATH: join(root, "bin", "FlowOnce.app"),
-    RECORD_REPLAY_HEADLESS: "1"
+    RECORD_REPLAY_HEADLESS: "1",
+    FLOWONCE_JOURNEY_PATH: join(stateRoot, "journey.json")
   },
   stdio: ["pipe", "pipe", "inherit"]
 });
