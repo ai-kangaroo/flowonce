@@ -14,5 +14,9 @@ node_modules/
 # Build output
 dist/
 bin/
+.build/
+
+# Debug tools
+.playwright-cli/
 # 公众号草稿（本地不提交）
 docs/share/

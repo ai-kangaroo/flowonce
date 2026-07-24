@@ -94,10 +94,10 @@
 重新运行安装器即可。安装器会自动覆盖旧版 App 和 MCP 配置，已生成的技能文件不受影响。
 
 ```bash
-# 从 GitHub
-curl -fsSL https://raw.githubusercontent.com/ai-kangaroo/flowonce/main/scripts/install.sh | bash
+# 开发者从本地源码
+./scripts/install-local.sh codex
 
-# 从 SkillHub
+# SkillHub 仅安装控制器 Skill
 skillhub install flowonce --dir ~/.codebuddy/skills/
 ```
 
@@ -117,7 +117,7 @@ rm -rf ~/.codebuddy/automations/flowonce/   # 自动化配置（如有）
 
 **Q17：多个 AI 主机（CodeBuddy + Qoder + Codex）共用一套 FlowOnce 需要怎么配置？**
 
-安装器会自动写入所有已知主机的 MCP 配置。如果手动维护：
+安装器会自动写入 CodeBuddy、WorkBuddy、Qoder 和 Codex 的 MCP 配置。QoderWork 需在其 MCP 设置中手动添加。如果手动维护：
 
 ```bash
 node scripts/record-replay.mjs host-config codebuddy   # CodeBuddy

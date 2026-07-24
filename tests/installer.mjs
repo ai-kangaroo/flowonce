@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const releaseVersion = JSON.parse(await readFile(join(root, "release.json"), "utf8")).version;
 const testRoot = await mkdtemp(join(tmpdir(), "record-replay-installer."));
 const payload = join(testRoot, "payload");
 const product = join(payload, "product");
@@ -19,6 +20,7 @@ await mkdir(join(payload, "skill-packages"), { recursive: true });
 await cp(join(root, "bin", "FlowOnce.app"), join(product, "bin", "FlowOnce.app"), { recursive: true });
 await cp(join(root, "scripts", "event-stream-mcp.mjs"), join(product, "scripts", "event-stream-mcp.mjs"));
 await cp(join(root, "skills", "record-and-replay-local", "SKILL.md"), join(skillSource, "SKILL.md"));
+await cp(join(root, "skills", "record-and-replay-local", "references"), join(skillSource, "references"), { recursive: true });
 await cp(process.execPath, join(payload, "runtime", "bin", "node"), { dereference: true });
 await chmod(join(payload, "runtime", "bin", "node"), 0o755);
 await writeFile(join(payload, "skill-packages", "FlowOnce-Controller.zip"), "test-package");
@@ -82,6 +84,7 @@ assert(qoderConfig.mcpServers["record-and-replay-local"], "Qoder MCP server miss
 const workBuddyConfig = JSON.parse(await readFile(join(home, ".workbuddy", "mcp.json"), "utf8"));
 assert(workBuddyConfig.mcpServers["record-and-replay-local"], "WorkBuddy MCP server missing");
 assert(await readFile(join(home, ".codebuddy", "skills", "record-and-replay-local", "SKILL.md"), "utf8"), "CodeBuddy skill missing");
+assert(await readFile(join(home, ".codebuddy", "skills", "record-and-replay-local", "references", "faq-deep.md"), "utf8"), "CodeBuddy skill references missing");
 assert(await readFile(join(home, ".qoder", "skills", "record-and-replay-local", "SKILL.md"), "utf8"), "Qoder skill missing");
 assert(await readFile(join(home, "Library", "Application Support", "FlowOnce", "share", "FlowOnce-Controller.zip"), "utf8") === "test-package", "WorkBuddy package missing");
 assert((await readFile(join(home, "Applications", "FlowOnce.app", "Contents", "Info.plist"), "utf8")).includes("local.record-and-replay"), "recorder app missing or wrong identity");
@@ -98,6 +101,9 @@ const codexHome = join(testRoot, "codex-home");
 const fakeCodex = join(testRoot, "fake-codex.sh");
 const codexLog = join(testRoot, "codex.log");
 await mkdir(join(codexHome, ".codex"), { recursive: true });
+await mkdir(join(codexHome, ".codex", "skills", "flowonce"), { recursive: true });
+await writeFile(join(codexHome, ".codex", "skills", "flowonce", "SKILL.md"), "---\nname: record-and-replay-local\nmetadata:\n  version: 0.3.2\n---\n");
+await writeFile(join(codexHome, ".codex", "skills", "flowonce", "_meta.json"), '{"source":"skillhub"}\n');
 await writeFile(fakeCodex, `#!/bin/sh
 printf '%s\\n' "$*" >> "${codexLog}"
 if [ "$*" = "mcp get event-stream --json" ]; then
@@ -112,6 +118,8 @@ assert(loggedCommands.includes("mcp remove record-and-replay-local"), "Codex old
 assert(loggedCommands.includes("mcp remove event-stream"), "Codex legacy duplicate MCP entry was not removed");
 assert(loggedCommands.includes("mcp add record-and-replay-local --"), "Codex MCP server was not added");
 assert(await readFile(join(codexHome, ".codex", "skills", "record-and-replay-local", "SKILL.md"), "utf8"), "Codex skill missing");
+assert((await readFile(join(codexHome, ".codex", "skills", "flowonce", "SKILL.md"), "utf8")).includes(`version: ${releaseVersion}`), "SkillHub alias was not synchronized");
+assert(await readFile(join(codexHome, ".codex", "skills", "flowonce", "_meta.json"), "utf8"), "SkillHub alias metadata was not preserved");
 
 const invalidHome = join(testRoot, "invalid-home");
 await mkdir(join(invalidHome, ".qoder"), { recursive: true });

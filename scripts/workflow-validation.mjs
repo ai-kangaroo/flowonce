@@ -1,4 +1,5 @@
 const supportedActions = new Set(["click", "drag", "input_text", "submit", "shortcut", "scroll"]);
+const safetyCategories = new Set(["external_message", "delete", "financial_action", "system_setting_change", "file_overwrite", "unknown"]);
 
 export function validateWorkflow(workflow, { requireReviewed = false } = {}) {
   const errors = [];
@@ -35,6 +36,18 @@ export function validateWorkflow(workflow, { requireReviewed = false } = {}) {
       errors.push(`steps[${index}] drag coordinates must be finite numbers`);
     }
     if (step?.action === "shortcut" && (!step.key || typeof step.key !== "string")) errors.push(`steps[${index}].key must be a semantic key string`);
+    if (step?.safety !== undefined) {
+      if (!step.safety || typeof step.safety !== "object" || Array.isArray(step.safety)) {
+        errors.push(`steps[${index}].safety must be an object`);
+      } else {
+        if (typeof step.safety.requiresConfirmation !== "boolean") {
+          errors.push(`steps[${index}].safety.requiresConfirmation must be boolean`);
+        }
+        if (step.safety.requiresConfirmation === true && !safetyCategories.has(step.safety.category)) {
+          errors.push(`steps[${index}].safety.category is invalid`);
+        }
+      }
+    }
     if (typeof step?.value === "string") {
       for (const match of step.value.matchAll(/\{\{([^{}]+)\}\}/g)) {
         if (!inputNames.has(match[1])) errors.push(`steps[${index}].value references unknown input: ${match[1]}`);

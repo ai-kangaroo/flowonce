@@ -72,6 +72,7 @@ assert(await exists(installed.recorderApp), "recorder app was not installed");
 const recorderRequirement = await run("/usr/bin/codesign", ["-d", "-r-", installed.recorderApp]);
 assert(`${recorderRequirement.stdout}${recorderRequirement.stderr}`.includes('designated => identifier "local.record-and-replay"'), "installed recorder lost its stable designated requirement");
 assert(await exists(join(home, ".codebuddy", "skills", "record-and-replay-local", "SKILL.md")), "portable skill was not installed");
+assert(await exists(join(home, ".codebuddy", "skills", "record-and-replay-local", "references", "faq-deep.md")), "portable skill references were not installed");
 assert(!(await exists(join(home, ".codebuddy", "skills", "record-and-replay-local", "agents", "openai.yaml"))), "portable skill contains Codex-only metadata");
 
 const installedRoot = installed.installRoot;
@@ -96,7 +97,8 @@ function request(method, params = {}) {
 const initialized = await request("initialize", { protocolVersion: "2025-06-18" });
 assert(initialized.serverInfo.name === "record-and-replay-local", "installed MCP server identity is wrong");
 const tools = await request("tools/list");
-assert(tools.tools.length === 7, "installed MCP tool surface is incomplete");
+assert(tools.tools.length === 11, "installed MCP tool surface is incomplete");
+assert(tools.tools.some(tool => tool.name === "flowonce_doctor"), "installed MCP doctor tool is missing");
 const prompts = await request("prompts/list");
 assert(prompts.prompts.some(prompt => prompt.name === "record_workflow"), "installed MCP prompt is missing");
 mcp.stdin.end();

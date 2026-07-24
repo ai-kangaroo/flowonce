@@ -32,12 +32,14 @@
 | 隐私优先 | 全程本地，敏感值强制占位符化，物理上无法写入技能包 |
 | 人机确认 | 生成前必须人工确认，AI 是学徒不是黑盒 |
 | 逐步验证 | 每个关键动作自动注入验证点，状态不符即停 |
+| 自动试跑 | 生成后默认安全试跑，记录逐步证据；安全试跑失败时自动修订并最多重试两轮 |
+| 长任务不假失败 | 归一化、编译和生成使用后台 Job，立即返回进度；相同请求自动复用，避免 MCP 超时后重复生成 |
 | 跨宿主 | 一次录制，CodeBuddy / WorkBuddy / Qoder / QoderWork / Codex 通用 |
 
 ## How It Works
 
 ```
-录制 → 语义归一化 → 编译 Workflow IR → 人机确认 → 校验生成技能
+录制 → 语义归一化 → 编译 Workflow IR → 人机确认 → 生成 → 安全试跑 → 评测修订
 ```
 
 1. **录制**：用户在 macOS 上正常操作，FlowOnce 捕获 Accessibility 事件流
@@ -45,6 +47,8 @@
 3. **编译**：生成宿主无关的 Workflow IR（草案）
 4. **确认**：AI 拿草案找用户确认参数、验收标准、无关动作
 5. **生成**：校验通过后生成可安装的 Agent 技能包
+6. **试跑**：宿主使用不同参数执行生成的技能；默认停在外部发送、删除、付款、覆盖已有内容等动作之前
+7. **评测**：保存逐步结果；安全试跑失败时按证据修订并最多自动重试两轮
 
 ## Installation
 
@@ -52,29 +56,37 @@
 
 下载 DMG → 双击 **Install FlowOnce.app** → 授予辅助功能权限 → 重启 AI 主机
 
-[⬇️ 下载最新版](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg)
+[⬇️ Apple Silicon](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Apple-Silicon.dmg) · [⬇️ Intel](https://github.com/ai-kangaroo/flowonce/releases/latest/download/FlowOnce-macOS-Intel.dmg)
 
 ### 开发者安装（无 DMG）
 
 ```sh
 git clone https://github.com/ai-kangaroo/flowonce.git
 cd flowonce
-./scripts/build.sh
-./scripts/install-recorder.sh
+./scripts/install-local.sh codex
 
 # 查看各主机 MCP 配置
 node scripts/record-replay.mjs host-config codebuddy
+
+# 一次检查版本、录制器、辅助功能权限、MCP 与 Skill
+node scripts/record-replay.mjs doctor codex
+
+# 仅用于本地开发：无备份清理旧安装并全新安装到 Codex
+node scripts/reset-local-install.mjs --yes-delete-without-backup
 ```
 
 ## Usage
 
 录制工作流：
 ```
-1. 说：「请用 FlowOnce 学习我接下来的操作」
-2. 说：「我准备好了，开始录制」
-3. 正常操作 Mac
-4. 点击悬浮窗 Stop，说：「我操作完了」
-5. 确认 AI 的草案，生成并安装技能
+1. 首次使用说：「初始化 FlowOnce」
+2. 说：「请用 FlowOnce 学习我接下来的操作」
+3. 说：「我准备好了，开始录制」
+4. 正常操作 Mac
+5. 点击悬浮窗 Stop，说：「我操作完了」
+6. 确认 AI 的草案
+7. FlowOnce 自动进行安全试跑；如果缺少测试参数，只需补充一次
+8. AI 告诉你结果是“完整通过”“安全检查点通过”还是“尚未验证”
 ```
 
 使用技能：
@@ -92,6 +104,10 @@ node scripts/record-replay.mjs stop
 node scripts/record-replay.mjs normalize /path/to/events.jsonl
 node scripts/record-replay.mjs compile /path/to/events.jsonl
 node scripts/record-replay.mjs generate /path/to/workflow.json /output skill-name --target portable
+node scripts/record-replay.mjs test-start /output/skill-name /path/to/test-inputs.json --backend <backend>
+node scripts/record-replay.mjs test-finish <run-id> /path/to/test-result.json
+node scripts/record-replay.mjs test-status [run-id]
+node scripts/record-replay.mjs doctor [host]
 ```
 
 ## Trust & Safety
@@ -100,6 +116,7 @@ node scripts/record-replay.mjs generate /path/to/workflow.json /output skill-nam
 - 密码、Token、验证码等敏感值**编译期强制替换为占位符**
 - 录制需**明确授权**，单次上限 30 分钟，Cancel 即丢弃
 - 涉及删除、发消息、财务操作时，执行前**必须人工二次确认**
+- 安全试跑默认在外部或不可逆动作前停止；评测报告不保存测试输入值
 
 详见 [安全策略](./SECURITY.md)。
 

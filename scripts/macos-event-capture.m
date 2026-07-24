@@ -284,6 +284,18 @@ static BOOL RequestLocalRecordingConsent(void) {
 
 int main(int argc, const char *argv[]) {
     @autoreleasepool {
+        if (argc >= 2 && strcmp(argv[1], "--check-accessibility") == 0) {
+            BOOL trusted = AXIsProcessTrusted();
+            NSDictionary *result = @{ @"accessibilityTrusted": @(trusted) };
+            NSData *data = [NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingSortedKeys error:nil];
+            if (argc >= 3) {
+                NSString *resultPath = [NSString stringWithUTF8String:argv[2]];
+                [data writeToFile:resultPath atomically:YES];
+            }
+            fwrite(data.bytes, 1, data.length, stdout);
+            fputc('\n', stdout);
+            return 0;
+        }
         BOOL headless = [[NSProcessInfo.processInfo.environment objectForKey:@"RECORD_REPLAY_HEADLESS"] isEqualToString:@"1"];
         BOOL forcePermissionRequired = [[NSProcessInfo.processInfo.environment objectForKey:@"RECORD_REPLAY_FORCE_ACCESSIBILITY_UNTRUSTED"] isEqualToString:@"1"];
         if (argc >= 3) {

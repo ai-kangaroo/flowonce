@@ -170,6 +170,7 @@ process.stdout.write(`${JSON.stringify({
     "Infer and replace the null goal and success description before generating a skill.",
     "Rename candidate inputs based on their semantic purpose.",
     "Remove incidental demonstration actions and coordinate-only fallbacks where stable targets exist.",
+    "Mark each external message, deletion, financial action, system-setting change, or overwrite of existing content with step.safety.requiresConfirmation=true and its safety category.",
     "Timing hints are derived from the original recording; the replay agent may adjust wait times if the UI responds faster or slower."
   ]
 }, null, 2)}\n`);

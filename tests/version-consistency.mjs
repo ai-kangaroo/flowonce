@@ -39,8 +39,8 @@ for (const relativePath of ["README.md", "docs/guides/user-guide.md"]) {
 const readme = await readFile(join(root, "README.md"), "utf8");
 assert(readme.includes(`version-${expected}-blue`), `README.md badge does not match release ${expected}`);
 const skill = await readFile(join(root, "skills", "record-and-replay-local", "SKILL.md"), "utf8");
-const skillVersion = skill.match(/^version:\s*([^\s]+)$/m);
-assert(skillVersion, "SKILL.md is missing its version");
+const skillVersion = skill.match(/^\s{2}version:\s*([^\s]+)$/m);
+assert(skillVersion, "SKILL.md metadata is missing its version");
 assert(skillVersion[1] === expected, `SKILL.md version ${skillVersion[1]} does not match release ${expected}`);
 
 process.stdout.write(`Brand and version consistency OK (FlowOnce ${expected})\n`);

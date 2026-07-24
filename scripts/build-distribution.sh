@@ -65,6 +65,7 @@ ditto "$ROOT/bin/FlowOnce.app" "$PRODUCT/bin/FlowOnce.app"
 cp "$ROOT/release.json" "$PRODUCT/release.json"
 for script in \
   compile-workflow.mjs \
+  doctor-service.mjs \
   event-stream-mcp.mjs \
   generate-skill.mjs \
   host-config.mjs \
@@ -72,12 +73,14 @@ for script in \
   normalize-recording.mjs \
   record-replay.mjs \
   recorder-service.mjs \
+  skill-test-service.mjs \
   validate-workflow.mjs \
   workflow-validation.mjs
 do
   cp "$ROOT/scripts/$script" "$PRODUCT/scripts/$script"
 done
 cp "$ROOT/skills/record-and-replay-local/SKILL.md" "$PRODUCT/skills/record-and-replay-local/SKILL.md"
+cp -R "$ROOT/skills/record-and-replay-local/references" "$PRODUCT/skills/record-and-replay-local/references"
 cp "$NODE_BINARY" "$PAYLOAD/runtime/bin/node"
 chmod 755 "$PAYLOAD/runtime/bin/node"
 cp "$NODE_LICENSE" "$PAYLOAD/licenses/node/LICENSE"

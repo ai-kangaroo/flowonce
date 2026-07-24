@@ -234,9 +234,36 @@ function configureCodexMcp(home, server) {
   return { command: executable };
 }
 
-async function installSkill(source, destination) {
+async function isFlowOnceSkill(path) {
+  try {
+    const source = await readFile(join(path, "SKILL.md"), "utf8");
+    return /^name:\s*record-and-replay-local\s*$/m.test(source);
+  } catch {
+    return false;
+  }
+}
+
+async function syncSkillAlias(source, destination) {
+  if (!(await isFlowOnceSkill(destination))) return null;
+  await cp(join(source, "SKILL.md"), join(destination, "SKILL.md"));
+  const sourceReferences = join(source, "references");
+  const destinationReferences = join(destination, "references");
+  if (await exists(sourceReferences)) {
+    await rm(destinationReferences, { recursive: true, force: true });
+    await cp(sourceReferences, destinationReferences, { recursive: true });
+  }
+  return destination;
+}
+
+async function installSkill(source, destination, aliases = []) {
   const backupPath = await replaceOwnedDirectory(source, destination);
-  return { path: destination, ...(backupPath ? { backupPath } : {}) };
+  const syncedAliases = [];
+  for (const alias of aliases) {
+    if (alias === destination) continue;
+    const synced = await syncSkillAlias(source, alias);
+    if (synced) syncedAliases.push(synced);
+  }
+  return { path: destination, ...(backupPath ? { backupPath } : {}), ...(syncedAliases.length ? { syncedAliases } : {}) };
 }
 
 async function migrateLegacyRecorder(home, installRoot) {
@@ -315,7 +342,11 @@ async function install(options) {
     if (host === "codebuddy") {
       configured.codebuddy = {
         mcp: await mergeMcpConfig(await codeBuddyConfigPath(options.home), server),
-        skill: await installSkill(skillSource, join(options.home, ".codebuddy", "skills", "record-and-replay-local"))
+        skill: await installSkill(
+          skillSource,
+          join(options.home, ".codebuddy", "skills", "record-and-replay-local"),
+          [join(options.home, ".codebuddy", "skills", "flowonce")]
+        )
       };
     } else if (host === "workbuddy") {
       const mcp = await mergeMcpConfig(join(options.home, ".workbuddy", "mcp.json"), server);
@@ -328,14 +359,22 @@ async function install(options) {
     } else if (host === "qoder") {
       configured.qoder = {
         mcp: await mergeMcpConfig(join(options.home, ".qoder", "settings.json"), server),
-        skill: await installSkill(skillSource, join(options.home, ".qoder", "skills", "record-and-replay-local"))
+        skill: await installSkill(
+          skillSource,
+          join(options.home, ".qoder", "skills", "record-and-replay-local"),
+          [join(options.home, ".qoder", "skills", "flowonce")]
+        )
       };
     } else if (host === "codex") {
       const mcp = configureCodexMcp(options.home, server);
       if (mcp.warning) warnings.push(mcp.warning);
       configured.codex = {
         mcp,
-        skill: await installSkill(skillSource, join(options.home, ".codex", "skills", "record-and-replay-local"))
+        skill: await installSkill(
+          skillSource,
+          join(options.home, ".codex", "skills", "record-and-replay-local"),
+          [join(options.home, ".codex", "skills", "flowonce")]
+        )
       };
     }
   }
